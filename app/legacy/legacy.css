@@ -454,20 +454,19 @@
   .lr-nav, .lh-nav { min-height: 76px; padding: 0 16px; }
   .lr-nav > a:last-child { display: none; }
   .lr-hero { grid-template-columns: 1fr; }
-  .lr-hero > div:first-child { padding: 125px 18px 55px; }
   .lr-hero h1 { font-size: clamp(75px, 23vw, 108px); }
   .lr-hero > figure { min-height: 510px; margin: 0 18px 18px; }
   .lr-stamp { top: 48%; right: 7%; width: 90px; border-width: 8px; }
   .lr-story, .lr-life, .lr-visit { grid-template-columns: 1fr; }
-  .lr-story { gap: 28px; padding: 80px 18px; }
   .lr-story > p { grid-column: auto; }
   .lr-story h2 { font-size: clamp(52px, 15vw, 72px); }
   .lr-life > figure { min-height: 500px; }
   .lr-life > div { padding: 70px 18px; }
   .lr-mission { grid-template-columns: 1fr 1fr; padding: 80px 18px; }
   .lr-mission h2 { font-size: clamp(65px, 20vw, 92px); }
-  .lr-visit { gap: 45px; padding: 80px 18px; }
-  .lr-footer, .lh-footer, .lt-footer, .lp-footer { grid-template-columns: 1fr; gap: 22px; align-items: start; padding: 60px 18px 100px; }
+  .lr-visit { gap: 45px; }
+  .lh-footer, .lt-footer, .lp-footer { grid-template-columns: 1fr; gap: 22px; align-items: start; padding: 60px 18px 100px; }
+  .lr-footer { grid-template-columns: 1fr; gap: 22px; align-items: start; padding: 60px var(--lr-gutter) 100px; }
 
   .lh-hero { grid-template-columns: 1fr; padding: 60px 18px 85px; }
   .lh-hero h1 { font-size: clamp(62px, 18vw, 86px); }
