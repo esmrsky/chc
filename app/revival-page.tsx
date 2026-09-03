@@ -15,7 +15,7 @@ import {
   Users,
   Video,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import './revival.css';
 
 const INSTAGRAM = 'https://www.instagram.com/christianhopechurchfl/';
@@ -23,18 +23,16 @@ const YOUTUBE = 'https://www.youtube.com/@ChristianHopeChurchfl';
 const GIVE = 'https://give.tithe.ly/?formId=19ee2214-9179-41b7-b8a1-60cbb330bb9c';
 const MAP = 'https://maps.apple.com/?address=2800%20Pan%20American%20Blvd%2C%20North%20Port%2C%20FL%2034287';
 
-// The sticky horizontal scrub runs at every width; only a genuinely short
-// viewport (landscape phones) falls back to a plain swipeable rail, and the JS
-// must not fight that. Mirrored in revival.css.
-const FLAT_RAIL = '(max-height: 560px)';
-
-// Kept in sync with the @supports (animation-timeline: view()) block in legacy.css.
+// Everything that eases in on scroll. Paired with .lr-reveal in revival.css,
+// which also carries the per-element variants (headings blur in, figures wipe).
 const REVEAL_SELECTOR = [
-  '.lr-story > *', '.lr-leadership > *', '.lr-leadership-values article',
-  '.lr-weekly > *', '.lr-service-grid article',
-  '.lr-mission-copy > *', '.lr-mission-visuals', '.lr-mission-list', '.lr-mission-list article',
-  '.lr-watch-sticky > header > *', '.lr-gallery > *', '.lr-gallery figure',
-  '.lr-visit > *', '.lr-give > *', '.lr-footer > *',
+  '.lr-story > *',
+  '.lr-leadership > figure', '.lr-leadership-copy > *', '.lr-leadership-values article',
+  '.lr-weekly > header > *', '.lr-service-grid article', '.lr-weekly > .lr-inline-link',
+  '.lr-mission-copy > *', '.lr-mission-visuals figure', '.lr-mission-list article',
+  '.lr-watch-panel > header > *', '.lr-watch-controls', '.lr-watch-track',
+  '.lr-gallery > header > *', '.lr-gallery figure',
+  '.lr-visit-copy > *', '.lr-map', '.lr-give > *', '.lr-footer > *',
 ].join(', ');
 
 type RevivalLanguage = 'en' | 'uk' | 'ru';
@@ -50,9 +48,9 @@ const revivalCopy = {
     language: 'Language',
     nav: ['Our church', 'Leadership', 'Missions', 'Watch', 'Visit'],
     donate: 'Donate',
-    eyebrow: 'A multilingual church in North Port, Florida',
-    heroTitle: ['Hope is alive', 'and moving outward.'],
-    heroBody: 'Christian Hope is a church family learning the way of Jesus, growing together, and carrying the gospel from our city to the nations.',
+    eyebrow: 'Christian Hope · Христианская Надежда · North Port, Florida',
+    heroTitle: ['Hope is alive', 'and it keeps moving.'],
+    heroBody: 'A church family in North Port with roots in Ukraine, worshipping across Ukrainian, Russian, and English. As long as people need hope, the church keeps moving forward.',
     visitCta: 'Plan a visit',
     watchCta: 'Watch the latest message',
     giveCta: 'Give with purpose',
@@ -60,11 +58,11 @@ const revivalCopy = {
     welcomeLabel: '01 / Welcome',
     welcomeTitle: ['Church can be a place', 'to breathe again.'],
     welcomeLead: 'You do not need to perform, pretend, or have every answer before you walk through the door.',
-    welcomeBody: 'We gather across generations, cultures, and languages around Jesus—with room for questions, prayer, friendship, and a faith that reaches beyond Sunday.',
+    welcomeBody: 'Three languages in one room, and several generations with them. Come with your questions. What holds us together is Jesus, prayer, and a friendship that outlasts Sunday.',
     leadershipLabel: '02 / Leadership',
     leadershipTitle: ['Leaders who stay', 'close to people.'],
-    leadershipLead: 'Christian Hope is served by a pastoral team committed to Scripture, prayer, and a church culture where people are known.',
-    leadershipBody: 'They lead together—shepherding the local church, developing others, and building relationships that carry the gospel beyond North Port.',
+    leadershipLead: 'A pastoral team committed to Scripture, to prayer, and to a church where people are actually known by name.',
+    leadershipBody: 'We belong to the wider Christian Hope movement, with roots in Ukraine. Our leaders shepherd this congregation, raise up the next ones, and keep the ties that send people out.',
     leadershipValues: [
       ['Shepherd with care', 'People are not projects. Pastoral care begins with presence, prayer, and listening.'],
       ['Teach with clarity', 'Scripture shapes what we believe, how we live, and the kind of community we become.'],
@@ -84,11 +82,11 @@ const revivalCopy = {
     currentUpdates: 'See current updates',
     missionLabel: '04 / Missions',
     missionTitle: ['The gospel was always', 'meant to travel.'],
-    missionBody: 'Our mission begins in North Port and moves through prayer, evangelism, relationships, and practical support for ministry partners around the world.',
+    missionBody: 'Trials do not cancel a calling. Our mission starts on Pan American Boulevard and runs through real relationships — into the churches we came from, and out to the ones being planted now.',
     missionItems: [
-      ['Local witness', 'Training ordinary people to share the gospel confidently in everyday life.'],
-      ['Global partnerships', 'Standing with leaders and ministries serving communities in Ukraine and Pakistan.'],
-      ['Prayer for the nations', 'Carrying people, churches, and places before God—together.'],
+      ['Witness at home', 'Equipping ordinary people to speak about Jesus without a script, in everyday life.'],
+      ['Ukraine', 'Standing with the churches of our movement through a war that has not stopped the gospel.'],
+      ['Sent to Miami', 'A new congregation planted this year, sent out from this church family.'],
     ],
     missionStory: 'Watch a mission story',
     watchLabel: '05 / Watch & listen',
@@ -107,16 +105,16 @@ const revivalCopy = {
     giveTitle: 'Give where hope is moving.',
     giveBody: 'Your generosity supports the life of the church, local evangelism, and mission relationships beyond our city.',
     giveNow: 'Donate securely',
-    footerLine: 'Encounter God · Find community · Carry hope',
-    footerDescription: 'A multilingual church family following Jesus and carrying living hope from North Port to the nations.',
+    footerLine: 'Christian Hope · Християнська надія · Христианская Надежда',
+    footerDescription: 'A church family in North Port with roots in Ukraine, following Jesus in three languages and carrying living hope wherever it is sent.',
   },
   uk: {
     language: 'Мова',
     nav: ['Про церкву', 'Лідерство', 'Місія', 'Дивитися', 'Завітайте'],
     donate: 'Пожертвувати',
-    eyebrow: 'Багатомовна церква в Норт-Порті, Флорида',
-    heroTitle: ['Надія жива', 'і рухається далі.'],
-    heroBody: 'Christian Hope — це церковна родина, яка пізнає шлях Ісуса, зростає разом і несе Євангеліє від нашого міста до народів.',
+    eyebrow: 'Християнська надія · Christian Hope · Норт-Порт, Флорида',
+    heroTitle: ['Надія жива', 'і вона йде далі.'],
+    heroBody: 'Церковна родина в Норт-Порті з корінням в Україні — ми поклоняємося українською, російською й англійською. Поки людям потрібна надія — Церква йде вперед.',
     visitCta: 'Запланувати візит',
     watchCta: 'Дивитися останню проповідь',
     giveCta: 'Пожертвувати',
@@ -124,11 +122,11 @@ const revivalCopy = {
     welcomeLabel: '01 / Ласкаво просимо',
     welcomeTitle: ['Церква може стати місцем,', 'де знову легко дихати.'],
     welcomeLead: 'Вам не потрібно грати роль, удавати чи мати всі відповіді, перш ніж зайти у двері.',
-    welcomeBody: 'Ми збираємося різними поколіннями, культурами й мовами навколо Ісуса — тут є місце для запитань, молитви, дружби та віри, що виходить за межі неділі.',
+    welcomeBody: 'Три мови в одному залі й кілька поколінь разом. Приходьте зі своїми запитаннями. Нас тримає разом Ісус, молитва й дружба, яка триває довше за неділю.',
     leadershipLabel: '02 / Лідерство',
     leadershipTitle: ['Лідери, які залишаються', 'поруч із людьми.'],
-    leadershipLead: 'Christian Hope служить пасторська команда, віддана Писанню, молитві та церковній культурі, де кожну людину знають.',
-    leadershipBody: 'Вони ведуть церкву разом — піклуються про місцеву громаду, розвивають інших і будують стосунки, що несуть Євангеліє далеко за межі Норт-Порта.',
+    leadershipLead: 'Пасторська команда, віддана Писанню, молитві та церкві, де людей справді знають на ім’я.',
+    leadershipBody: 'Ми частина ширшого руху «Християнська надія» із корінням в Україні. Наші лідери піклуються про цю громаду, готують наступних і зберігають зв’язки, які посилають людей.',
     leadershipValues: [
       ['Піклуватися по-пасторськи', 'Люди — не проєкти. Пасторська турбота починається з присутності, молитви та слухання.'],
       ['Навчати зрозуміло', 'Писання формує нашу віру, щоденне життя і спільноту, якою ми стаємо.'],
@@ -148,11 +146,11 @@ const revivalCopy = {
     currentUpdates: 'Переглянути оновлення',
     missionLabel: '04 / Місія',
     missionTitle: ['Євангеліє завжди було', 'покликане рухатися.'],
-    missionBody: 'Наша місія починається в Норт-Порті й поширюється через молитву, євангелізацію, стосунки та практичну підтримку служителів у різних країнах.',
+    missionBody: 'Випробування не скасовують покликання. Наша місія починається на Pan American Boulevard і йде живими стосунками — до церков, з яких ми вийшли, і до тих, які засновуються зараз.',
     missionItems: [
-      ['Місцеве свідчення', 'Допомагаємо звичайним людям упевнено ділитися Євангелієм у щоденному житті.'],
-      ['Глобальне партнерство', 'Стоїмо поруч із лідерами та служіннями, які служать громадам в Україні й Пакистані.'],
-      ['Молитва за народи', 'Разом приносимо до Бога людей, церкви й країни.'],
+      ['Свідчення вдома', 'Допомагаємо звичайним людям говорити про Ісуса без сценарію — у звичайному житті.'],
+      ['Україна', 'Стоїмо поруч із церквами нашого руху крізь війну, яка не зупинила Євангелія.'],
+      ['Послані в Маямі', 'Нова громада, заснована цього року й послана з нашої церковної родини.'],
     ],
     missionStory: 'Дивитися місіонерську історію',
     watchLabel: '05 / Дивитися й слухати',
@@ -171,16 +169,16 @@ const revivalCopy = {
     giveTitle: 'Підтримайте те, де рухається надія.',
     giveBody: 'Ваша щедрість підтримує життя церкви, місцеву євангелізацію та місіонерські партнерства за межами нашого міста.',
     giveNow: 'Безпечно пожертвувати',
-    footerLine: 'Зустріти Бога · Знайти спільноту · Нести надію',
-    footerDescription: 'Багатомовна церковна родина, що слідує за Ісусом і несе живу надію від Норт-Порта до народів.',
+    footerLine: 'Christian Hope · Християнська надія · Христианская Надежда',
+    footerDescription: 'Церковна родина в Норт-Порті з корінням в Україні: йдемо за Ісусом трьома мовами й несемо живу надію туди, куди посилає Бог.',
   },
   ru: {
     language: 'Язык',
     nav: ['О церкви', 'Лидерство', 'Миссия', 'Смотреть', 'Посетить'],
     donate: 'Пожертвовать',
-    eyebrow: 'Многоязычная церковь в Норт-Порте, Флорида',
-    heroTitle: ['Надежда жива', 'и движется дальше.'],
-    heroBody: 'Christian Hope — это церковная семья, которая познаёт путь Иисуса, растёт вместе и несёт Евангелие от нашего города к народам.',
+    eyebrow: 'Христианская Надежда · Christian Hope · Норт-Порт, Флорида',
+    heroTitle: ['Надежда жива', 'и она идёт дальше.'],
+    heroBody: 'Церковная семья в Норт-Порте с корнями в Украине — мы поклоняемся на украинском, русском и английском. Пока людям нужна надежда, Церковь идёт вперёд.',
     visitCta: 'Запланировать визит',
     watchCta: 'Смотреть последнюю проповедь',
     giveCta: 'Пожертвовать',
@@ -188,11 +186,11 @@ const revivalCopy = {
     welcomeLabel: '01 / Добро пожаловать',
     welcomeTitle: ['Церковь может стать местом,', 'где снова легко дышать.'],
     welcomeLead: 'Вам не нужно играть роль, притворяться или знать все ответы, прежде чем войти в дверь.',
-    welcomeBody: 'Мы собираемся разными поколениями, культурами и языками вокруг Иисуса — здесь есть место для вопросов, молитвы, дружбы и веры, которая продолжается после воскресенья.',
+    welcomeBody: 'Три языка в одном зале и несколько поколений вместе. Приходите со своими вопросами. Нас держит Иисус, молитва и дружба, которая длится дольше воскресенья.',
     leadershipLabel: '02 / Лидерство',
     leadershipTitle: ['Лидеры, которые остаются', 'рядом с людьми.'],
-    leadershipLead: 'Christian Hope служит пасторская команда, преданная Писанию, молитве и церковной культуре, где каждого человека знают.',
-    leadershipBody: 'Они ведут церковь вместе — заботятся о местной общине, развивают других и строят отношения, которые несут Евангелие далеко за пределы Норт-Порта.',
+    leadershipLead: 'Пасторская команда, преданная Писанию, молитве и церкви, где людей действительно знают по имени.',
+    leadershipBody: 'Мы часть движения «Христианская Надежда» с корнями в Украине. Наши лидеры заботятся об этой общине, готовят следующих и хранят связи, которые посылают людей дальше.',
     leadershipValues: [
       ['Заботиться по-пасторски', 'Люди — не проекты. Пасторская забота начинается с присутствия, молитвы и умения слушать.'],
       ['Учить ясно', 'Писание формирует нашу веру, повседневную жизнь и общину, которой мы становимся.'],
@@ -212,11 +210,11 @@ const revivalCopy = {
     currentUpdates: 'Посмотреть обновления',
     missionLabel: '04 / Миссия',
     missionTitle: ['Евангелие всегда было', 'призвано двигаться.'],
-    missionBody: 'Наша миссия начинается в Норт-Порте и продолжается через молитву, евангелизацию, отношения и практическую поддержку служителей в разных странах.',
+    missionBody: 'Испытания не отменяют призвания. Наша миссия начинается на Pan American Boulevard и идёт живыми отношениями — к церквям, из которых мы вышли, и к тем, что основываются сейчас.',
     missionItems: [
-      ['Местное свидетельство', 'Помогаем обычным людям уверенно делиться Евангелием в повседневной жизни.'],
-      ['Глобальное партнёрство', 'Стоим рядом с лидерами и служениями, которые служат людям в Украине и Пакистане.'],
-      ['Молитва за народы', 'Вместе приносим к Богу людей, церкви и страны.'],
+      ['Свидетельство дома', 'Помогаем обычным людям говорить об Иисусе без сценария — в повседневной жизни.'],
+      ['Украина', 'Стоим рядом с церквями нашего движения через войну, которая не остановила Евангелие.'],
+      ['Посланы в Майами', 'Новая община, основанная в этом году и посланная из нашей церковной семьи.'],
     ],
     missionStory: 'Смотреть миссионерскую историю',
     watchLabel: '05 / Смотреть и слушать',
@@ -235,8 +233,8 @@ const revivalCopy = {
     giveTitle: 'Поддержите то, где движется надежда.',
     giveBody: 'Ваша щедрость поддерживает жизнь церкви, местную евангелизацию и миссионерские партнёрства за пределами нашего города.',
     giveNow: 'Безопасно пожертвовать',
-    footerLine: 'Встретить Бога · Найти общину · Нести надежду',
-    footerDescription: 'Многоязычная церковная семья, которая следует за Иисусом и несёт живую надежду от Норт-Порта до народов.',
+    footerLine: 'Christian Hope · Християнська надія · Христианская Надежда',
+    footerDescription: 'Церковная семья в Норт-Порте с корнями в Украине: идём за Иисусом на трёх языках и несём живую надежду туда, куда посылает Бог.',
   },
 } as const;
 
@@ -273,10 +271,13 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     );
   };
   useEffect(() => () => swapTimers.current.forEach(window.clearTimeout), []);
+  const nav = useRef<HTMLElement>(null);
   const videoSection = useRef<HTMLElement>(null);
   const videoRail = useRef<HTMLDivElement>(null);
   const videoProgressBar = useRef<HTMLSpanElement>(null);
-  const videoProgressValue = useRef(0);
+  // Set once the visitor drives the rail themselves; page scroll stops moving
+  // it from under their finger until the section has left the viewport again.
+  const railManual = useRef(false);
   const videos = [
     { id: 'PaYleMiqKyY', title: 'ОГОНЬ ЕДИНСТВА! One Spirit' },
     { id: 'JCYdslrd_Qs', title: 'Культура Церкви · Воскресное служение' },
@@ -297,11 +298,32 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   ];
 
   useEffect(() => {
-    const updateHeader = () => setScrolled(window.scrollY > 48);
+    const updateHeader = () => {
+      setScrolled(window.scrollY > 48);
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      nav.current?.style.setProperty('--lr-progress', max > 0 ? String(Math.min(1, window.scrollY / max)) : '0');
+    };
     updateHeader();
     window.addEventListener('scroll', updateHeader, { passive: true });
-    return () => window.removeEventListener('scroll', updateHeader);
+    window.addEventListener('resize', updateHeader);
+    return () => {
+      window.removeEventListener('scroll', updateHeader);
+      window.removeEventListener('resize', updateHeader);
+    };
   }, []);
+
+  // Menu: lock the page behind the drawer, and let Escape close it.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
 
   // Section reveals. An IntersectionObserver rather than animation-timeline:
   // a scroll-linked range never completes for elements at the document bottom,
@@ -338,75 +360,81 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     return () => observer.disconnect();
   }, []);
 
+  // The video rail drifts sideways as the section crosses the viewport. It is a
+  // real scroll container at every width, so swipe, trackpad and the arrows all
+  // work; page scroll just eases it along. This replaces the sticky pin, which
+  // bought its scrub distance with a screen of empty section underneath.
   useEffect(() => {
+    const rail = videoRail.current;
+    const section = videoSection.current;
+    const progressBar = videoProgressBar.current;
+    if (!rail || !section || !progressBar) return;
+
     let frame = 0;
     const updateScrub = () => {
       frame = 0;
-      const section = videoSection.current;
-      const rail = videoRail.current;
-      const progressBar = videoProgressBar.current;
-      const sticky = rail?.parentElement;
-      if (!section || !rail || !progressBar || !sticky) return;
-
-      if (window.matchMedia(FLAT_RAIL).matches) {
-        section.style.height = 'auto';
-        rail.style.transform = 'none';
+      const travel = rail.scrollWidth - rail.clientWidth;
+      if (travel <= 0) {
         progressBar.style.width = '0%';
-        videoProgressValue.current = 0;
         return;
       }
-
-      // Scrub faster than 1:1 so the section is not several screens tall just to
-      // pan six cards, and size it from the panel rather than the viewport so
-      // there is no dead run after the last card.
-      const travel = Math.max(0, rail.scrollWidth - window.innerWidth);
-      const scrollLength = Math.min(
-        Math.max(travel * 0.55, window.innerHeight * 0.45),
-        window.innerHeight * 1.25,
-      );
-      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-      const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / scrollLength));
-
-      section.style.height = `${sticky.offsetHeight + scrollLength}px`;
-      rail.style.transform = `translate3d(${-progress * travel}px, 0, 0)`;
-      progressBar.style.width = `${progress * 100}%`;
-      videoProgressValue.current = progress;
+      const rect = section.getBoundingClientRect();
+      // Fully past the viewport in either direction: hand the rail back to the
+      // page so a later visit starts from the top of the drift again.
+      if (rect.bottom < 0 || rect.top > window.innerHeight) railManual.current = false;
+      if (!railManual.current) {
+        const crossed = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+        // Spend the travel between 34% and 70% of the crossing: 34% is roughly
+        // where the rail clears the bottom of the viewport, 80% is where it is
+        // 70% is where it is fully in view again near the top. Outside that the cards would be
+        // panning while nobody can see them.
+        const progress = Math.min(1, Math.max(0, (crossed - 0.34) / 0.36));
+        rail.scrollLeft = progress * travel;
+      }
+      progressBar.style.width = `${Math.min(1, Math.max(0, rail.scrollLeft / travel)) * 100}%`;
     };
 
     const requestUpdate = () => {
       if (!frame) frame = window.requestAnimationFrame(updateScrub);
     };
+    const takeOver = () => { railManual.current = true; };
     const observer = new ResizeObserver(requestUpdate);
-    if (videoRail.current) observer.observe(videoRail.current);
+    observer.observe(rail);
     requestUpdate();
     window.addEventListener('scroll', requestUpdate, { passive: true });
     window.addEventListener('resize', requestUpdate);
+    rail.addEventListener('scroll', requestUpdate, { passive: true });
+    rail.addEventListener('wheel', takeOver, { passive: true });
+    rail.addEventListener('touchstart', takeOver, { passive: true });
+    rail.addEventListener('pointerdown', takeOver);
+    rail.addEventListener('keydown', takeOver);
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener('scroll', requestUpdate);
       window.removeEventListener('resize', requestUpdate);
+      rail.removeEventListener('scroll', requestUpdate);
+      rail.removeEventListener('wheel', takeOver);
+      rail.removeEventListener('touchstart', takeOver);
+      rail.removeEventListener('pointerdown', takeOver);
+      rail.removeEventListener('keydown', takeOver);
     };
   }, [language]);
 
   const scrollVideos = (direction: -1 | 1) => {
-    const section = videoSection.current;
-    if (!section) return;
-    if (window.matchMedia(FLAT_RAIL).matches) {
-      videoRail.current?.scrollBy({ left: direction * window.innerWidth * 0.88, behavior: 'smooth' });
-      return;
-    }
-    const scrollLength = section.offsetHeight - window.innerHeight;
-    const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-    const nextProgress = Math.min(1, Math.max(0, videoProgressValue.current + direction / (videos.length - 1)));
-    window.scrollTo({ top: sectionTop + nextProgress * scrollLength, behavior: 'smooth' });
+    const rail = videoRail.current;
+    if (!rail) return;
+    railManual.current = true;
+    const card = rail.firstElementChild as HTMLElement | null;
+    const step = card ? card.offsetWidth + 18 : rail.clientWidth * 0.8;
+    rail.scrollBy({ left: direction * step, behavior: 'smooth' });
   };
 
   return (
     <main className="legacy-revival" lang={language}>
-      <header className="lr-nav" data-scrolled={scrolled}>
+      <header className="lr-nav" data-scrolled={scrolled} ref={nav}>
         <a href="#lr-main"><Logo /></a>
-        <nav id="lr-nav-menu" data-open={menuOpen} className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<a className="lr-menu-donate" href={GIVE} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}><Heart aria-hidden="true" /> {c.donate}</a></nav>
+        <nav id="lr-nav-menu" data-open={menuOpen} className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} style={{ '--i': index } as CSSProperties} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<a className="lr-menu-donate" style={{ '--i': c.nav.length } as CSSProperties} href={GIVE} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}><Heart aria-hidden="true" /> {c.donate}</a></nav>
         <div className="lr-nav-tools">
           <button type="button" className="lr-nav-toggle" data-open={menuOpen} aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen((open) => !open)}><span className="lr-burger" aria-hidden="true"><i /><i /><i /></span></button>
           <fieldset className="lr-language-picker" aria-label={c.language}>
@@ -415,7 +443,9 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
           </fieldset>
           <a className="lr-donate" href={GIVE} target="_blank" rel="noreferrer"><Heart aria-hidden="true" /> {c.donate}</a>
         </div>
+        <span className="lr-nav-progress" aria-hidden="true" />
       </header>
+      <div className="lr-nav-scrim" data-open={menuOpen} aria-hidden="true" onClick={() => setMenuOpen(false)} />
 
       <div className={swapping ? 'lr-language-content is-swapping' : 'lr-language-content'}>
 
@@ -438,9 +468,9 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
 
       <section className="lr-marquee" aria-label="Christian Hope Church message">
         <div className="lr-marquee-track">
-          {[0, 1].map((copyIndex) => (
-            <div className="lr-marquee-group" aria-hidden={copyIndex === 1} key={copyIndex}>
-              {['Hope is alive', 'Надія жива', 'Надежда жива', 'Worship', 'Prayer', 'Family', 'North Port to the nations'].map((item) => <span key={item}>{item}</span>)}
+          {[0, 1, 2].map((copyIndex) => (
+            <div className="lr-marquee-group" aria-hidden={copyIndex > 0} key={copyIndex}>
+              {['Hope is alive', 'Надія жива', 'Надежда жива', 'Worship', 'Prayer', 'Family', 'Ukraine · North Port · Miami', 'North Port to the nations'].map((item) => <span key={item}>{item}</span>)}
             </div>
           ))}
         </div>
@@ -473,7 +503,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       </section>
 
       <section className="lr-watch" id="lr-watch" ref={videoSection}>
-        <div className="lr-watch-sticky">
+        <div className="lr-watch-panel">
           <header><span>{c.watchLabel}</span><h2>{c.watchTitle}</h2><p>{c.watchIntro}</p></header>
           <div className="lr-watch-controls">
             <button type="button" onClick={() => scrollVideos(-1)} aria-label="Previous videos"><ArrowLeft /></button>

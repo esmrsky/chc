@@ -1,19 +1,15 @@
 .legacy-stage { --legacy-orange: #ff6315; min-height: 100vh; }
 .legacy-stage > main { animation: legacy-in .48s cubic-bezier(.2,.8,.2,1) both; }
 .legacy-logo { display: block; width: 190px; }
-.legacy-logo--mark { width: 42px; }
-.legacy-button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border: 1px solid currentColor; border-radius: 999px; font-size: 10px; font-weight: 900; font-style: normal; text-transform: uppercase; }
-.legacy-button svg { width: 16px; }
-.legacy-button--light { background: #fff; color: #151515; }
 
 /* Revival */
-.legacy-revival { --lr-orange: #ff6315; --lr-orange-deep: #ff6315; --lr-orange-ink: #e8480a; --lr-gold: #ff7a2e; --lr-cream: #fff4e8; --lr-ink: #1a1a1a; --lr-paper: #fffaf5; --lr-gutter: clamp(22px, 6vw, 96px); --lr-r-arch: 180px; --lr-r-lg: 28px; --lr-r-md: 18px; --lr-r-sm: 12px; --lr-section-y: clamp(96px, 11.5vw, 172px); --lr-brand-gradient: linear-gradient(135deg, #ff6315 0%, #f9560e 52%, #ee4606 100%); overflow: clip; background: var(--lr-paper); color: var(--lr-ink); font-family: 'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', sans-serif; font-optical-sizing: auto; }
+.legacy-revival { --lr-orange: #ff6315; --lr-orange-deep: #ff6315; --lr-orange-ink: #e8480a; --lr-gold: #ff7a2e; --lr-cream: #fff4e8; --lr-ink: #1a1a1a; --lr-paper: #fffaf5; --lr-gutter: clamp(22px, 6vw, 96px); --lr-nav-h: 96px; --lr-r-arch: 180px; --lr-r-lg: 28px; --lr-r-md: 18px; --lr-r-sm: 12px; --lr-section-y: clamp(96px, 11.5vw, 172px); --lr-brand-gradient: linear-gradient(135deg, #ff6315 0%, #f9560e 52%, #ee4606 100%); overflow: clip; background: var(--lr-paper); color: var(--lr-ink); font-family: 'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', sans-serif; font-optical-sizing: auto; }
 .legacy-revival img { display: block; width: 100%; }
 .legacy-revival section { scroll-margin-top: 104px; }
 .legacy-revival :is(h1, h2, h3) { text-wrap: balance; }
 .legacy-revival :is(p, strong, figcaption) { text-wrap: pretty; }
 .legacy-revival :is(a, button):focus-visible { outline: 3px solid var(--lr-gold); outline-offset: 4px; }
-.legacy-revival section > header > span, .lr-story > span, .lr-leadership-copy > span, .lr-mission-copy > span, .lr-visit-copy > span, .lr-give > div > span { color: var(--lr-orange-deep); font: 800 11px/1.1 'Plus Jakarta Sans', 'Avenir Next', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.legacy-revival section > header > span, .lr-watch-panel > header > span, .lr-story > span, .lr-leadership-copy > span, .lr-mission-copy > span, .lr-visit-copy > span, .lr-give > div > span { color: var(--lr-orange-deep); font: 800 11px/1.1 'Plus Jakarta Sans', 'Avenir Next', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .lr-nav { position: sticky; z-index: 20; top: 0; display: grid; grid-template-columns: 220px 1fr auto; gap: 28px; align-items: center; min-height: 96px; padding: 0 clamp(20px, 4vw, 64px); border-bottom: 1px solid transparent; background: transparent; box-shadow: 0 0 0 rgb(0 0 0 / 0%); backdrop-filter: blur(0) saturate(1); transition: min-height .45s cubic-bezier(.2,.8,.2,1), background-color .45s ease, border-color .45s ease, box-shadow .45s ease, backdrop-filter .45s ease; }
 .lr-nav[data-scrolled='true'] { min-height: 78px; border-color: rgb(26 26 26 / 12%); background: rgb(255 250 245 / 92%); box-shadow: 0 14px 40px rgb(74 35 8 / 8%); backdrop-filter: blur(20px) saturate(1.15); }
 .lr-nav nav { display: flex; justify-content: center; gap: clamp(18px, 2.5vw, 42px); font-size: 14px; font-weight: 900; letter-spacing: .055em; text-transform: uppercase; }
@@ -25,6 +21,9 @@
 .lr-nav-links.is-swapping, .lr-language-content.is-swapping { opacity: 0; }
 .lr-nav-tools, .lr-language-picker { display: flex; align-items: center; }
 .lr-nav-tools { gap: 12px; justify-self: end; }
+.lr-nav-tools > * { flex: none; }
+.lr-nav-progress { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; border-radius: 999px; background: var(--lr-brand-gradient); opacity: 0; transform: scaleX(var(--lr-progress, 0)); transform-origin: left; transition: opacity .4s ease; }
+.lr-nav[data-scrolled='true'] .lr-nav-progress { opacity: 1; }
 .lr-language-picker { gap: 4px; min-width: 0; margin: 0; padding: 5px; border: 1px solid #d8d3ca; border-radius: 999px; background: #fff; }
 .lr-language-picker > svg { width: 17px; margin: 0 4px 0 6px; color: var(--lr-orange-deep); }
 .lr-language-picker button { min-width: 36px; min-height: 32px; padding: 0 7px; border: 0; border-radius: 999px; background: transparent; color: #655f57; cursor: pointer; font-size: 10px; font-weight: 900; transition: background-color .25s ease, color .25s ease, transform .25s ease; }
@@ -33,10 +32,16 @@
 .lr-donate { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; padding: 0 17px; border-radius: 999px; background: var(--lr-orange); color: #fff; font-size: 12px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; transition: filter .25s ease, transform .25s ease, box-shadow .25s ease; }
 .lr-donate:hover { color: #fff; filter: brightness(.9); box-shadow: 0 12px 28px rgb(80 22 0 / 22%); transform: translateY(-2px); }
 .lr-donate svg { width: 17px; }
-.lr-hero { position: relative; isolation: isolate; display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(30px, 6vw, 90px); min-height: calc(100svh - 96px); margin-top: -96px; padding: clamp(150px, 14vw, 190px) var(--lr-gutter) clamp(54px, 6vw, 90px); overflow: hidden; background: radial-gradient(circle at 86% 12%, rgb(255 99 21 / 20%), transparent 29%), radial-gradient(circle at 94% 92%, rgb(255 99 21 / 32%), transparent 35%), #fff; background-size: 150% 150%; animation: lr-gradient-shift 16s ease-in-out infinite alternate; }
-.lr-hero::before, .lr-hero::after { position: absolute; z-index: -1; border-radius: 50%; content: ''; pointer-events: none; filter: blur(18px); }
-.lr-hero::before { top: 6%; left: 35%; width: 310px; height: 310px; border: 1px solid rgb(255 99 21 / 30%); background: rgb(255 99 21 / 13%); animation: lr-orbit-a 13s ease-in-out infinite alternate; }
-.lr-hero::after { right: -9%; bottom: -18%; width: 520px; height: 520px; background: radial-gradient(circle, rgb(255 99 21 / 24%), transparent 68%); animation: lr-orbit-b 17s ease-in-out infinite alternate; }
+.lr-hero { position: relative; isolation: isolate; display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(30px, 6vw, 90px); min-height: calc(100svh - 96px); margin-top: -96px; padding: clamp(150px, 14vw, 190px) var(--lr-gutter) clamp(54px, 6vw, 90px); overflow: hidden; background:
+    radial-gradient(62% 58% at 84% 2%, rgb(255 122 46 / 92%) 0%, rgb(255 108 30 / 46%) 40%, rgb(255 99 21 / 0%) 70%),
+    radial-gradient(66% 60% at 98% 92%, rgb(228 58 0 / 88%) 0%, rgb(255 99 21 / 40%) 42%, rgb(255 99 21 / 0%) 72%),
+    radial-gradient(52% 46% at 2% 104%, rgb(255 150 74 / 58%) 0%, rgb(255 150 74 / 0%) 68%),
+    radial-gradient(40% 36% at 52% 22%, rgb(255 228 202 / 92%) 0%, rgb(255 228 202 / 0%) 72%),
+    linear-gradient(158deg, #fffdfb 0%, #ffefe1 44%, #ffd4b6 100%);
+  background-size: 118% 118%; animation: lr-gradient-shift 18s ease-in-out infinite alternate; }
+.lr-hero::before, .lr-hero::after { position: absolute; z-index: -1; border-radius: 50%; content: ''; pointer-events: none; }
+.lr-hero::before { top: -4%; left: 26%; width: 440px; height: 440px; background: radial-gradient(circle, rgb(255 138 61 / 52%) 0%, rgb(255 99 21 / 0%) 68%); filter: blur(38px); animation: lr-orbit-a 13s ease-in-out infinite alternate; }
+.lr-hero::after { right: -12%; bottom: -22%; width: 620px; height: 620px; background: conic-gradient(from 220deg, rgb(255 99 21 / 46%), rgb(255 176 122 / 24%), rgb(238 70 6 / 44%), rgb(255 99 21 / 46%)); filter: blur(58px); animation: lr-orbit-b 17s ease-in-out infinite alternate; }
 .lr-hero-copy { position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; }
 .lr-hero-copy > p { color: var(--lr-orange-deep); font: 800 11px/1.1 'Plus Jakarta Sans', 'Avenir Next', sans-serif; letter-spacing: .13em; text-transform: uppercase; }
 .lr-hero h1 { max-width: 900px; margin: 34px 0; font-size: clamp(52px, 5.2vw, 88px); letter-spacing: -.075em; line-height: .8; }
@@ -92,10 +97,16 @@
 .lr-weekly > header > span { color: #fff; }
 .lr-weekly h2 { font-size: clamp(55px, 6.3vw, 96px); letter-spacing: -.065em; line-height: .9; }
 .lr-weekly > header p { color: #fff; font-size: 16px; font-weight: 700; line-height: 1.6; }
-.lr-service-grid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 65px; border: 1px solid rgb(255 255 255 / 42%); }
-.lr-service-grid article { position: relative; display: grid; grid-template-columns: 1fr auto; min-height: 370px; padding: 24px; border-right: 1px solid rgb(255 255 255 / 42%); border-radius: var(--lr-r-md); transition: background-color .32s ease, transform .32s cubic-bezier(.2,.8,.2,1), box-shadow .32s ease; }
-.lr-service-grid article:hover { z-index: 2; background: rgb(255 255 255 / 20%); box-shadow: 0 26px 60px rgb(60 18 0 / 32%); transform: translateY(-8px) scale(1.015); }
-.lr-service-grid article:last-child { border-right: 0; }
+/* Separate tiles with a gap rather than cells sharing 1px rules: a card that
+   lifts on hover then has nothing to overlap, and its rounded corners are not
+   fighting a square grid line. */
+.lr-service-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 65px; }
+.lr-service-grid article { position: relative; isolation: isolate; display: grid; grid-template-columns: 1fr auto; min-height: 370px; padding: 26px; overflow: hidden; border: 1px solid rgb(255 255 255 / 34%); border-radius: var(--lr-r-lg); background: rgb(255 255 255 / 7%); transition: background-color .42s ease, border-color .42s ease, transform .42s cubic-bezier(.2,.8,.2,1), box-shadow .42s ease; }
+.lr-service-grid article::after { position: absolute; z-index: -1; inset: 0; background: radial-gradient(120% 88% at 50% 0%, rgb(255 255 255 / 30%), transparent 72%); content: ''; opacity: 0; transition: opacity .42s ease; }
+.lr-service-grid article:hover { border-color: rgb(255 255 255 / 82%); background: rgb(255 255 255 / 14%); box-shadow: 0 30px 62px rgb(70 20 0 / 30%); transform: translateY(-10px); }
+.lr-service-grid article:hover::after { opacity: 1; }
+.lr-service-grid article > svg { transition: transform .42s cubic-bezier(.2,.8,.2,1); }
+.lr-service-grid article:hover > svg { transform: translateY(-3px) scale(1.08); }
 .lr-service-grid article > span { font-size: 10px; font-weight: 800; letter-spacing: .1em; }
 .lr-service-grid article > svg { width: 25px; }
 .lr-service-grid h3 { grid-column: 1 / -1; align-self: end; max-width: 230px; font-size: clamp(25px, 2.3vw, 36px); letter-spacing: -.04em; line-height: .95; white-space: pre-line; }
@@ -123,26 +134,26 @@
 .lr-mission-list h3 { font-size: 22px; }
 .lr-mission-list p { grid-column: 2; color: #aaa; font-size: 14px; line-height: 1.6; }
 .lr-watch { position: relative; background: var(--lr-cream); }
-.lr-watch-sticky { position: sticky; top: 0; display: grid; height: auto; min-height: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); align-content: center; overflow: hidden; padding: clamp(96px, 10vh, 130px) 0 clamp(36px, 5vh, 70px); }
-.lr-watch-sticky > header, .lr-gallery > header { display: grid; flex: none; grid-template-columns: .25fr 1fr .55fr; gap: 5vw; align-items: end; padding: 0 var(--lr-gutter); }
+.lr-watch-panel { display: grid; grid-template-columns: minmax(0, 1fr); padding: var(--lr-section-y) 0 calc(var(--lr-section-y) - 26px); }
+.lr-watch-panel > header, .lr-gallery > header { display: grid; flex: none; grid-template-columns: .25fr 1fr .55fr; gap: 5vw; align-items: end; padding: 0 var(--lr-gutter); }
 .lr-gallery h2 { font-size: clamp(55px, 6.3vw, 98px); letter-spacing: -.065em; line-height: .9; }
-/* The watch heading shares a fixed-height panel with the video rail, so it is
-   set smaller than the free-standing section headings on purpose. */
-.lr-watch h2 { font-size: clamp(38px, 3.9vw, 58px); letter-spacing: -.055em; line-height: .95; }
-.lr-watch-sticky > header p { color: #625c54; font-size: 16px; line-height: 1.65; }
-.lr-watch-controls { display: grid; flex: none; grid-template-columns: auto minmax(140px, 360px) auto; gap: 12px; align-items: center; justify-content: end; margin: clamp(22px, 3vh, 38px) clamp(22px, 6vw, 96px) 0; }
+.lr-watch h2 { font-size: clamp(48px, 5.6vw, 88px); letter-spacing: -.065em; line-height: .9; }
+.lr-watch-panel > header p { color: #625c54; font-size: 16px; line-height: 1.65; }
+.lr-watch-controls { display: grid; grid-template-columns: auto minmax(140px, 360px) auto; gap: 12px; align-items: center; justify-content: end; margin: clamp(26px, 3vw, 40px) clamp(22px, 6vw, 96px) 0; }
 .lr-watch-controls button { display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid var(--lr-orange-deep); border-radius: 50%; background: transparent; color: var(--lr-orange-deep); cursor: pointer; transition: background-color .25s ease, color .25s ease, transform .25s ease; }
 .lr-watch-controls button:hover { background: var(--lr-orange); color: #fff; transform: scale(1.05); }
 .lr-watch-controls button svg { width: 18px; }
 .lr-watch-progress { height: 3px; overflow: hidden; border-radius: 999px; background: rgb(255 99 21 / 18%); }
 .lr-watch-progress span { display: block; min-width: 10%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--lr-orange), var(--lr-gold)); transition: width .18s linear; }
-.lr-watch-track { display: grid; width: max-content; min-height: 0; align-items: start; grid-auto-columns: auto; grid-auto-flow: column; gap: 18px; margin-top: clamp(14px, 2vh, 22px); padding: 0 clamp(22px, 6vw, 96px) 24px; will-change: transform; }
+/* Horizontally scrollable, so swipe, trackpad and the arrows all reach every
+   card; page scroll only eases it along (see revival-page.tsx). */
+.lr-watch-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 470px); align-items: start; gap: 18px; margin-top: clamp(18px, 2.4vw, 26px); padding: 6px clamp(22px, 6vw, 96px) 26px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
 .lr-watch-track::-webkit-scrollbar { display: none; }
-.lr-watch-track article { display: grid; grid-template-rows: auto auto; align-content: start; width: max-content; min-height: 0; overflow: hidden; border: 1px solid #d5d0c8; border-radius: var(--lr-r-md); background: #fff; scroll-snap-align: start; transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease; }
+.lr-watch-track article { display: grid; grid-template-rows: auto auto; align-content: start; overflow: hidden; border: 1px solid #d5d0c8; border-radius: var(--lr-r-md); background: #fff; scroll-snap-align: start; transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease; }
 .lr-watch-track article:hover { border-color: var(--lr-orange); box-shadow: 0 22px 55px rgb(65 41 23 / 12%); transform: translateY(-5px); }
-.lr-video-frame { width: auto; height: min(38vh, 340px); min-height: 0; aspect-ratio: 16 / 9; background: #171717; }
+.lr-video-frame { width: 100%; aspect-ratio: 16 / 9; background: #171717; }
 .lr-video-frame iframe { width: 100%; height: 100%; border: 0; }
-.lr-watch-track article > div:last-child { display: grid; width: 0; min-width: 100%; grid-template-columns: auto 1fr; gap: 9px 16px; padding: 22px; }
+.lr-watch-track article > div:last-child { display: grid; grid-template-columns: auto 1fr; gap: 9px 16px; padding: 22px; }
 .lr-watch-track article > div:last-child > span { color: var(--lr-orange-deep); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
 .lr-watch-track h3 { display: -webkit-box; overflow: hidden; font-size: 19px; line-height: 1.2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .lr-watch-track a { grid-column: 2; display: inline-flex; align-items: center; gap: 7px; color: #655f57; font-size: 9px; font-weight: 900; text-transform: uppercase; }
@@ -196,13 +207,15 @@
 
 @keyframes lr-hero-in { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 @keyframes lr-media-in { from { opacity: 0; transform: translateX(28px) scale(.985); } to { opacity: 1; transform: none; } }
-@keyframes lr-language-in { from { opacity: 0; filter: blur(9px); transform: translateY(10px); } to { opacity: 1; filter: blur(0); transform: none; } }
 @keyframes lr-gradient-shift { from { background-position: 0% 20%; } to { background-position: 100% 80%; } }
 @keyframes lr-orbit-a { from { transform: translate3d(-20px, -10px, 0) scale(.92); } to { transform: translate3d(58px, 46px, 0) scale(1.08); } }
 @keyframes lr-orbit-b { from { transform: translate3d(0, 0, 0) scale(.9); } to { transform: translate3d(-70px, -42px, 0) scale(1.1); } }
-@keyframes lr-marquee-loop { to { transform: translate3d(-50%, 0, 0); } }
-@keyframes lr-rise { from { opacity: 0; transform: translateY(26px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes lr-marquee-loop { to { transform: translate3d(-33.3333%, 0, 0); } }
 @keyframes lr-parallax-drift { from { translate: 0 2.5%; scale: 1.09; } to { translate: 0 -2.5%; scale: 1.09; } }
+
+@keyframes lr-heading-drift { from { translate: 0 15px; } to { translate: 0 -15px; } }
+@keyframes lr-band-drift { from { translate: 0 7%; } to { translate: 0 -7%; } }
+@keyframes lr-marquee-scrub { from { translate: 3vw 0; } to { translate: -3vw 0; } }
 
 @supports (animation-timeline: view()) {
   .lr-parallax-media {
@@ -210,44 +223,31 @@
     animation-timeline: view(block);
     animation-range: entry 0% exit 100%;
   }
+  /* Staggered, so the three mission frames do not travel as one slab. */
+  .lr-mission-visuals figure:nth-child(2) .lr-parallax-media { animation-range: entry 0% exit 132%; }
+  .lr-mission-visuals figure:nth-child(3) .lr-parallax-media { animation-range: entry -20% exit 88%; }
+
+  /* Section headings ease along as their section crosses. These animate
+     `translate` rather than `transform` so they compose with the reveal above
+     instead of replacing it. */
+  .lr-story h2, .lr-leadership-copy h2, .lr-weekly h2, .lr-mission-copy h2,
+  .lr-watch h2, .lr-gallery h2, .lr-visit h2, .lr-give h2 {
+    animation: lr-heading-drift linear both;
+    animation-timeline: view(block);
+    animation-range: entry 25% exit 100%;
+  }
+  .lr-weekly::after {
+    animation: lr-orbit-b 18s ease-in-out infinite alternate, lr-band-drift linear both;
+    animation-timeline: auto, view(block);
+  }
+  /* The marquee keeps its own loop and picks up a page-scroll offset on top. */
+  .lr-marquee-track {
+    animation: lr-marquee-loop 28s linear infinite, lr-marquee-scrub linear both;
+    animation-timeline: auto, scroll(root block);
+  }
 }
-
-/* Homecoming */
-
-/* Signal */
-
-/* The Table */
-
-/* Presence */
 
 @keyframes legacy-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-
-@media (max-width: 980px) {
-  .lr-nav { grid-template-columns: 1fr auto; }
-  .lr-story { grid-template-columns: 1fr 1fr; }
-  .lr-story > p { grid-column: 2; }
-  .lr-mission { grid-template-columns: 1fr 1fr; }
-  .lr-mission > div { grid-column: 1 / -1; }
-}
-
-@media (max-width: 720px) {
-  .lr-hero { padding-top: 118px; }
-  .legacy-logo { width: 150px; }
-
-  .lr-nav { min-height: 76px; padding: 0 16px; }
-  .lr-nav > a:last-child { display: none; }
-  .lr-hero { grid-template-columns: 1fr; }
-  .lr-hero h1 { font-size: clamp(75px, 23vw, 108px); }
-  .lr-hero > figure { min-height: 510px; margin: 0 18px 18px; }
-  .lr-story, .lr-visit { grid-template-columns: 1fr; }
-  .lr-story > p { grid-column: auto; }
-  .lr-story h2 { font-size: clamp(52px, 15vw, 72px); }
-  .lr-mission { grid-template-columns: 1fr 1fr; padding: 80px 18px; }
-  .lr-mission h2 { font-size: clamp(65px, 20vw, 92px); }
-  .lr-visit { gap: 45px; }
-  .lr-footer { grid-template-columns: 1fr; gap: 22px; align-items: start; padding: calc(var(--lr-section-y) * .6) var(--lr-gutter) calc(var(--lr-section-y) * .9); }
-
-}
 
 @media (prefers-reduced-motion: reduce) {
   .legacy-stage > main { animation: none; }
@@ -257,9 +257,7 @@
   .lr-nav { grid-template-columns: 190px 1fr auto; }
   .lr-nav nav { gap: 16px; font-size: 12px; }
   .lr-service-grid { grid-template-columns: 1fr 1fr; }
-  .lr-service-grid article { min-height: 310px; border-bottom: 1px solid rgb(255 255 255 / 42%); }
-  .lr-service-grid article:nth-child(2) { border-right: 0; }
-  .lr-service-grid article:nth-child(3), .lr-service-grid article:nth-child(4) { border-bottom: 0; }
+  .lr-service-grid article { min-height: 310px; }
   .lr-mission-visuals { grid-template-columns: 1.3fr .7fr; }
   .lr-mission-visuals figure:last-child { display: none; }
 }
@@ -269,13 +267,13 @@
   .lr-hero { grid-template-columns: 1fr; min-height: auto; }
   .lr-hero .lr-hero-copy { padding: 40px 0 20px; }
   .lr-hero-collage { aspect-ratio: 3 / 2; min-height: 0; }
-  .lr-story, .lr-leadership, .lr-weekly > header, .lr-mission-copy, .lr-watch-sticky > header, .lr-gallery > header { grid-template-columns: 1fr; }
+  .lr-story, .lr-leadership, .lr-weekly > header, .lr-mission-copy, .lr-watch-panel > header, .lr-gallery > header { grid-template-columns: 1fr; }
   .lr-story { gap: 30px; }
   .lr-story > div { max-width: 690px; }
   .lr-leadership > figure { max-width: 760px; }
   .lr-leadership-copy { max-width: 760px; }
-  .lr-weekly > header, .lr-watch-sticky > header, .lr-gallery > header { gap: 26px; }
-  .lr-weekly > header p, .lr-watch-sticky > header p { max-width: 620px; }
+  .lr-weekly > header, .lr-watch-panel > header, .lr-gallery > header { gap: 26px; }
+  .lr-weekly > header p, .lr-watch-panel > header p { max-width: 620px; }
   .lr-mission-copy { gap: 28px; }
   .lr-mission-copy > p, .lr-mission-copy > a { grid-column: auto; max-width: 650px; }
   .lr-mission-list { grid-template-columns: 1fr; }
@@ -290,7 +288,6 @@
 
 @media (max-width: 720px) {
   .lr-nav { min-height: 76px; padding: 0 14px; }
-  .lr-nav .legacy-logo { width: 138px; }
   .lr-language-picker { gap: 2px; }
   .lr-language-picker > svg { display: none; }
   .lr-language-picker button { min-width: 44px; min-height: 44px; padding: 0 5px; }
@@ -303,27 +300,24 @@
   .lr-hero-collage { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; aspect-ratio: auto; min-height: 0; gap: 8px; }
   .lr-hero-collage .lr-hero-primary { grid-column: 1 / -1; grid-row: auto; aspect-ratio: 4 / 3; min-height: 0; }
   .lr-hero-collage figure:not(.lr-hero-primary) { aspect-ratio: 1 / 1; min-height: 0; border-radius: var(--lr-r-md); }
-  .lr-hero-collage figcaption { padding: 9px; font-size: 8px; }
-  .legacy-revival { --lr-gutter: 16px; --lr-section-y: 82px; --lr-r-arch: 104px; --lr-r-lg: 20px; --lr-r-md: 14px; --lr-r-sm: 10px; }
+  .legacy-revival { --lr-gutter: 16px; --lr-nav-h: 76px; --lr-section-y: 82px; --lr-r-arch: 104px; --lr-r-lg: 20px; --lr-r-md: 14px; --lr-r-sm: 10px; }
   .lr-story, .lr-leadership, .lr-weekly, .lr-missions, .lr-gallery, .lr-visit, .lr-give { padding: var(--lr-section-y) var(--lr-gutter); }
   .lr-story h2, .lr-leadership-copy h2, .lr-weekly h2, .lr-mission-copy h2, .lr-watch h2, .lr-gallery h2, .lr-visit h2, .lr-give h2 { font-size: clamp(38px, 10.5vw, 58px); }
   .lr-leadership-copy { margin-left: 0; }
   .lr-leadership-values { grid-template-columns: 1fr; }
   .lr-leadership-values article, .lr-leadership-values article:not(:first-child) { padding: 24px 0; border-right: 0; border-bottom: 1px solid #d5cec4; }
   .lr-leadership-values article:last-child { border-bottom: 0; }
-  .lr-story > div, .lr-weekly > header p, .lr-mission-copy > p, .lr-mission-copy > a, .lr-watch-sticky > header p { margin-left: 0; }
-  .lr-service-grid { grid-template-columns: 1fr; margin-top: 44px; }
-  .lr-service-grid article { min-height: 280px; border-right: 0; border-bottom: 1px solid rgb(255 255 255 / 42%); }
-  .lr-service-grid article:nth-child(3) { border-bottom: 1px solid rgb(255 255 255 / 42%); }
+  .lr-story > div, .lr-weekly > header p, .lr-mission-copy > p, .lr-mission-copy > a, .lr-watch-panel > header p { margin-left: 0; }
+  .lr-service-grid { grid-template-columns: 1fr; gap: 10px; margin-top: 44px; }
+  .lr-service-grid article { min-height: 236px; }
   .lr-mission-visuals { grid-template-columns: 1fr 1fr; margin-top: 48px; }
   .lr-mission-visuals .lr-mission-main { grid-column: 1 / -1; min-height: 490px; }
   .lr-mission-visuals figure:not(.lr-mission-main) { min-height: 230px; }
   .lr-mission-visuals figure:last-child { display: block; }
-  .lr-watch { padding: 0; }
-  .lr-watch-sticky { padding: 74px 0 30px; }
-  .lr-watch-sticky > header { padding: 0 16px; }
-  .lr-watch-controls { grid-template-columns: auto 1fr auto; margin: 34px 16px 0; }
-  .lr-watch-track { margin-top: 30px; padding: 0 16px 18px; }
+  .lr-watch-panel { padding: var(--lr-section-y) 0 calc(var(--lr-section-y) - 18px); }
+  .lr-watch-panel > header { padding: 0 16px; }
+  .lr-watch-controls { grid-template-columns: auto 1fr auto; margin: 30px 16px 0; }
+  .lr-watch-track { grid-auto-columns: min(84vw, 420px); margin-top: 24px; padding: 4px 16px 18px; }
   .lr-gallery > div { margin-top: 44px; }
   .lr-visit { gap: 45px; }
   .lr-visit address { margin-top: 30px; }
@@ -373,83 +367,84 @@
   .lr-nav > a:first-child { display: inline-flex; min-height: 44px; align-items: center; }
 }
 
-/* Reveal fallback for browsers without animation-timeline (Safari, Firefox).
-   The class is applied by JS, so the content stays visible if scripting fails. */
+/* Entrance for every section. Applied by JS on intersection, so content stays
+   visible if scripting fails, and stays revealed once seen. */
+/* Uses the individual `translate`/`scale` properties rather than `transform`,
+   so a revealed card's own :hover transform still applies — `.is-revealed`
+   out-specifies most hover rules and would otherwise cancel them. */
 .legacy-revival .lr-reveal {
-  opacity: 0; transform: translateY(26px) scale(.985);
-  transition: opacity .78s cubic-bezier(.16, 1, .3, 1), transform .78s cubic-bezier(.16, 1, .3, 1);
+  opacity: 0; translate: 0 30px;
+  transition: opacity .85s cubic-bezier(.16, 1, .3, 1), translate .85s cubic-bezier(.16, 1, .3, 1),
+    scale .85s cubic-bezier(.16, 1, .3, 1), filter .85s ease;
   transition-delay: var(--lr-reveal-delay, 0ms);
 }
-.legacy-revival .lr-reveal.is-revealed { opacity: 1; transform: none; }
+/* Headings resolve out of a soft blur; media eases down out of a slight scale. */
+.legacy-revival .lr-reveal:is(h1, h2) { translate: 0 38px; filter: blur(8px); }
+.legacy-revival .lr-reveal:is(figure, .lr-map) { translate: 0 30px; scale: .975; }
+.legacy-revival .lr-reveal.is-revealed { opacity: 1; translate: none; scale: none; filter: none; }
 @media (prefers-reduced-motion: reduce) {
-  .legacy-revival .lr-reveal { opacity: 1; transform: none; transition: none; }
-}
-
-/* --- Watch panel vertical fit ---------------------------------------------
-   The panel is a sticky 100svh box that clips its overflow, so on short
-   viewports the heading and intro have to give up room to the video rail. */
-@media (min-width: 981px) and (max-height: 860px) {
-  .lr-watch-sticky { padding-top: clamp(64px, 7vh, 92px); padding-bottom: clamp(20px, 2.5vh, 34px); }
-  .lr-watch h2 { font-size: clamp(32px, 3.2vw, 46px); }
-  .lr-watch-sticky > header { gap: 3vw; align-items: center; }
-  .lr-watch-sticky > header p { font-size: 14px; line-height: 1.55; }
-  .lr-watch-controls { margin-top: clamp(12px, 1.6vh, 20px); margin-bottom: 0; }
-  .lr-watch-track article > div:last-child { padding: 15px 18px; }
-  .lr-watch-track h3 { font-size: 17px; }
-}
-
-/* Too short for a sticky scrub to be pleasant: fall back to a plain swipeable
-   rail so nothing is ever clipped. Mirrors FLAT_RAIL in page.tsx. */
-@media (max-height: 560px) {
-  .lr-watch { height: auto !important; }
-  .lr-watch-sticky { position: static; height: auto; overflow: visible; padding: 80px 0 56px; }
-  .lr-watch-track {
-    width: auto; overflow-x: auto; transform: none !important;
-    grid-auto-columns: min(58vw, 520px); scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
+  .legacy-revival .lr-reveal { opacity: 1; translate: none; scale: none; filter: none; transition: none; }
 }
 
 /* --- Navigation below the desktop breakpoint ------------------------------
-   The links used to be display:none under 980px with nothing in their place,
-   which left tablets with no navigation at all. */
-.lr-nav-toggle { display: none; }
+   A full-width drawer that slides out from behind the bar, links staggering in
+   behind it. Donate moves into the drawer so the bar carries only the logo,
+   the language picker and the toggle. */
+.lr-nav-toggle, .lr-nav-scrim, .lr-menu-donate { display: none; }
 
 @media (max-width: 980px) {
+  .lr-nav { grid-template-columns: auto 1fr; }
+  .lr-nav .legacy-logo { width: clamp(130px, 21vw, 168px); }
+  .lr-donate { display: none; }
+
   .lr-nav-toggle {
-    display: grid; width: 44px; height: 44px; place-items: center;
-    border: 1px solid #d8d3ca; border-radius: 999px; background: #fff;
-    color: var(--lr-ink); cursor: pointer;
-    transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+    display: grid; width: 46px; height: 46px; flex: none; place-items: center; padding: 0;
+    border: 1px solid #d8d3ca; border-radius: 50%; background: #fff; color: var(--lr-ink);
+    cursor: pointer; transition: background-color .3s ease, color .3s ease, border-color .3s ease;
   }
   .lr-nav-toggle:hover { border-color: var(--lr-orange); color: var(--lr-orange); }
-  .lr-nav-toggle svg { width: 20px; }
 
-  .lr-nav { position: sticky; grid-template-columns: auto 1fr; }
-  .lr-nav-links {
-    position: absolute; top: 100%; right: clamp(14px, 4vw, 40px); left: clamp(14px, 4vw, 40px);
-    display: grid; justify-content: stretch; gap: 2px; padding: 10px;
-    border: 1px solid rgb(26 26 26 / 12%); border-radius: var(--lr-r-lg);
-    background: #fffaf5; box-shadow: 0 30px 70px rgb(74 35 8 / 26%);
-    backdrop-filter: blur(20px) saturate(1.15);
-    opacity: 0; transform: translateY(-10px); transform-origin: top;
-    transition: opacity .24s ease, transform .24s cubic-bezier(.2,.8,.2,1), visibility .24s;
-    visibility: hidden;
+  .lr-nav-scrim {
+    position: fixed; z-index: 15; inset: 0; display: block;
+    background: rgb(26 13 4 / 46%); opacity: 0; visibility: hidden;
+    transition: opacity .4s ease, visibility .4s;
   }
-  .lr-nav-links[data-open='true'] { opacity: 1; visibility: visible; transform: none; }
-  /* .lr-nav nav out-specifies .lr-nav-links, so scope these to win. */
-  .lr-nav .lr-nav-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+  .lr-nav-scrim[data-open='true'] { opacity: 1; visibility: visible; }
+
+  /* Negative z-index puts the panel above the bar's background but under its
+     logo and controls, which is what makes it read as sliding out from behind
+     the bar. `.lr-nav nav` out-specifies `.lr-nav-links`, hence the scoping. */
+  .lr-nav .lr-nav-links {
+    position: absolute; z-index: -1; top: 0; right: 0; left: 0;
+    display: grid; justify-content: stretch; gap: 4px;
+    padding: calc(var(--lr-nav-h) + 14px) clamp(14px, 4vw, 34px) clamp(20px, 4vw, 30px);
+    border-radius: 0 0 var(--lr-r-lg) var(--lr-r-lg);
+    background: var(--lr-paper); box-shadow: 0 34px 74px rgb(74 35 8 / 24%);
+    transform: translateY(-100%); visibility: hidden;
+    transition: transform .5s cubic-bezier(.22, 1, .32, 1), visibility .5s;
+  }
+  .lr-nav .lr-nav-links[data-open='true'] { transform: none; visibility: visible; }
   .lr-nav .lr-nav-links a {
-    display: flex; flex: 1 1 auto; min-height: 52px; align-items: center; justify-content: center;
-    padding: 0 16px; border-radius: var(--lr-r-sm); font-size: 13px; white-space: nowrap;
+    display: flex; min-height: 56px; align-items: center; gap: 11px;
+    padding: 0 18px; border-radius: var(--lr-r-md); font-size: 14px;
+    opacity: 0; translate: 0 -12px;
+    transition: opacity .34s ease, translate .5s cubic-bezier(.22, 1, .32, 1),
+      background-color .25s ease, color .25s ease;
   }
-  /* Below this the row cannot hold five items, so stack them. */
-  @media (max-width: 620px) {
-    .lr-nav .lr-nav-links { flex-direction: column; }
-    .lr-nav .lr-nav-links a { justify-content: flex-start; }
+  .lr-nav .lr-nav-links[data-open='true'] a {
+    opacity: 1; translate: none; transition-delay: calc(var(--i, 0) * 45ms + 110ms);
   }
   .lr-nav-links a::after { display: none; }
+  .lr-nav .lr-nav-links a:not(.lr-menu-donate) + a:not(.lr-menu-donate) { border-top: 1px solid rgb(26 26 26 / 8%); }
   .lr-nav-links a:hover { background: rgb(255 99 21 / 10%); color: var(--lr-orange); }
+
+  .lr-nav .lr-nav-links .lr-menu-donate {
+    display: flex; justify-content: center; margin-top: 8px;
+    background: var(--lr-orange); color: #fff; font-weight: 900; letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .lr-nav .lr-nav-links .lr-menu-donate svg { width: 16px; }
+  .lr-nav .lr-nav-links .lr-menu-donate:hover { background: var(--lr-orange); color: #fff; filter: brightness(.93); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -508,31 +503,6 @@
 @media (max-width: 560px) {
   .lr-gallery figcaption { padding: 8px 10px; font-size: 9px; gap: 7px; }
   .lr-gallery figcaption span { font-size: 8px; }
-}
-
-/* Donate is hidden from the header below 720px, so surface it in the menu
-   rather than losing the primary call to action on phones. */
-.lr-menu-donate { display: none; }
-@media (max-width: 720px) {
-  .lr-nav .lr-nav-links .lr-menu-donate {
-    display: flex; min-height: 52px; align-items: center; justify-content: center; gap: 9px;
-    margin-top: 6px; border-radius: var(--lr-r-sm); background: var(--lr-orange); color: #fff;
-    font-size: 12px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase;
-  }
-  .lr-nav .lr-nav-links .lr-menu-donate svg { width: 16px; }
-  .lr-nav .lr-nav-links .lr-menu-donate:hover { background: var(--lr-orange); color: #fff; filter: brightness(.93); }
-}
-
-/* --- Flat rail: card width leads, frame follows at a true 16:9 -------------
-   Mirrors FLAT_RAIL in revival-page.tsx. Here the column has a definite width,
-   so the frame takes 100% of it rather than deriving width from height. */
-@media (max-width: 980px), (max-height: 560px) {
-  .lr-watch-track { grid-auto-columns: min(82vw, 470px); }
-  /* Rows are content-sized here and the frame must not stretch, or the 1fr row
-     re-derives its width from a stretched height and overflows the card. */
-  .lr-watch-track article { width: auto; grid-template-rows: auto auto; }
-  .lr-watch-track article > div:last-child { width: auto; min-width: 0; }
-  .lr-video-frame { width: 100%; height: auto; align-self: start; justify-self: stretch; aspect-ratio: 16 / 9; }
 }
 
 /* --- Gallery on phones ----------------------------------------------------
