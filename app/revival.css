@@ -123,7 +123,7 @@
 .lr-mission-list h3 { font-size: 22px; }
 .lr-mission-list p { grid-column: 2; color: #aaa; font-size: 14px; line-height: 1.6; }
 .lr-watch { position: relative; background: var(--lr-cream); }
-.lr-watch-sticky { position: sticky; top: 0; display: grid; height: 100svh; grid-template-rows: auto auto minmax(0, 1fr); align-content: center; overflow: hidden; padding: clamp(96px, 10vh, 130px) 0 clamp(36px, 5vh, 70px); }
+.lr-watch-sticky { position: sticky; top: 0; display: grid; height: 100svh; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); align-content: center; overflow: hidden; padding: clamp(96px, 10vh, 130px) 0 clamp(36px, 5vh, 70px); }
 .lr-watch-sticky > header, .lr-gallery > header { display: grid; flex: none; grid-template-columns: .25fr 1fr .55fr; gap: 5vw; align-items: end; padding: 0 var(--lr-gutter); }
 .lr-gallery h2 { font-size: clamp(55px, 6.3vw, 98px); letter-spacing: -.065em; line-height: .9; }
 /* The watch heading shares a fixed-height panel with the video rail, so it is
@@ -136,11 +136,11 @@
 .lr-watch-controls button svg { width: 18px; }
 .lr-watch-progress { height: 3px; overflow: hidden; border-radius: 999px; background: rgb(255 99 21 / 18%); }
 .lr-watch-progress span { display: block; min-width: 10%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--lr-orange), var(--lr-gold)); transition: width .18s linear; }
-.lr-watch-track { display: grid; width: max-content; min-height: 0; grid-auto-columns: auto; grid-auto-flow: column; gap: 18px; margin-top: clamp(14px, 2vh, 22px); padding: 0 clamp(22px, 6vw, 96px) 24px; will-change: transform; }
+.lr-watch-track { display: grid; width: max-content; min-height: 0; align-items: start; grid-auto-columns: auto; grid-auto-flow: column; gap: 18px; margin-top: clamp(14px, 2vh, 22px); padding: 0 clamp(22px, 6vw, 96px) 24px; will-change: transform; }
 .lr-watch-track::-webkit-scrollbar { display: none; }
-.lr-watch-track article { display: grid; grid-template-rows: minmax(0, 1fr) auto; width: max-content; min-height: 0; overflow: hidden; border: 1px solid #d5d0c8; border-radius: 24px; background: #fff; scroll-snap-align: start; transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease; }
+.lr-watch-track article { display: grid; grid-template-rows: auto auto; align-content: start; width: max-content; min-height: 0; overflow: hidden; border: 1px solid #d5d0c8; border-radius: 24px; background: #fff; scroll-snap-align: start; transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease; }
 .lr-watch-track article:hover { border-color: var(--lr-orange); box-shadow: 0 22px 55px rgb(65 41 23 / 12%); transform: translateY(-5px); }
-.lr-video-frame { width: auto; height: 100%; max-height: min(42vh, 360px); min-height: 0; aspect-ratio: 16 / 9; background: #171717; }
+.lr-video-frame { width: auto; height: min(38vh, 340px); min-height: 0; aspect-ratio: 16 / 9; background: #171717; }
 .lr-video-frame iframe { width: 100%; height: 100%; border: 0; }
 .lr-watch-track article > div:last-child { display: grid; width: 0; min-width: 100%; grid-template-columns: auto 1fr; gap: 9px 16px; padding: 22px; }
 .lr-watch-track article > div:last-child > span { color: var(--lr-orange-deep); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
@@ -527,5 +527,5 @@
      re-derives its width from a stretched height and overflows the card. */
   .lr-watch-track article { width: auto; grid-template-rows: auto auto; }
   .lr-watch-track article > div:last-child { width: auto; min-width: 0; }
-  .lr-video-frame { width: 100%; height: auto; align-self: start; justify-self: stretch; max-height: none; aspect-ratio: 16 / 9; }
+  .lr-video-frame { width: 100%; height: auto; align-self: start; justify-self: stretch; aspect-ratio: 16 / 9; }
 }
