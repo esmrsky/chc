@@ -27,6 +27,17 @@ const YOUTUBE = 'https://www.youtube.com/@ChristianHopeChurchfl';
 const GIVE = 'https://give.tithe.ly/?formId=19ee2214-9179-41b7-b8a1-60cbb330bb9c';
 const MAP = 'https://maps.apple.com/?address=2800%20Pan%20American%20Blvd%2C%20North%20Port%2C%20FL%2034287';
 
+// The sticky horizontal scrub needs real vertical room. Below this it degrades
+// to a plain swipeable rail (see legacy.css), and the JS must not fight that.
+const FLAT_RAIL = '(max-width: 720px), (max-height: 640px)';
+
+// Kept in sync with the @supports (animation-timeline: view()) block in legacy.css.
+const REVEAL_SELECTOR = [
+  '.lr-story > *', '.lr-leadership > *', '.lr-weekly > *', '.lr-mission-copy > *',
+  '.lr-mission-visuals', '.lr-mission-list', '.lr-watch-sticky > header > *',
+  '.lr-gallery > *', '.lr-visit > *', '.lr-give > *',
+].join(', ');
+
 const concepts = [
   { id: 'revival', number: '01', name: 'Revival', note: 'Expressive' },
   { id: 'homecoming', number: '02', name: 'Homecoming', note: 'Pastoral' },
@@ -253,6 +264,21 @@ function VisitLink({ light = false }: { light?: boolean }) {
 function Revival({ language, onLanguageChange }: { language: RevivalLanguage; onLanguageChange: (language: RevivalLanguage) => void }) {
   const c = revivalCopy[language];
   const [scrolled, setScrolled] = useState(false);
+  const [swapping, setSwapping] = useState(false);
+
+  // Cross-fade the copy rather than remounting it. The subtree used to carry
+  // key={language}, which tore down and rebuilt every image and all six video
+  // embeds on each switch — the source of the flash and layout jump.
+  const swapLanguage = (next: RevivalLanguage) => {
+    if (next === language || swapping) return;
+    setSwapping(true);
+    // Timers rather than rAF: a backgrounded tab stops firing animation frames,
+    // which would strand the copy mid-fade.
+    window.setTimeout(() => {
+      onLanguageChange(next);
+      window.setTimeout(() => setSwapping(false), 20);
+    }, 190);
+  };
   const videoSection = useRef<HTMLElement>(null);
   const videoRail = useRef<HTMLDivElement>(null);
   const videoProgressBar = useRef<HTMLSpanElement>(null);
@@ -283,6 +309,84 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     return () => window.removeEventListener('scroll', updateHeader);
   }, []);
 
+  // The watch panel is a sticky 100svh box with overflow:hidden, and card width
+  // was a flat 64vw. Because the video frame is 16/9, wider viewports made the
+  // rail TALLER than the panel and the cards were silently clipped. Derive the
+  // card width from the height actually left over instead.
+  useEffect(() => {
+    const fitCards = () => {
+      const section = videoSection.current;
+      const rail = videoRail.current;
+      const sticky = rail?.parentElement;
+      if (!section || !rail || !sticky) return;
+
+      if (window.matchMedia(FLAT_RAIL).matches) {
+        section.style.removeProperty('--lr-card-w');
+        return;
+      }
+
+      const header = sticky.querySelector('header');
+      const controls = sticky.querySelector<HTMLElement>('.lr-watch-controls');
+      const meta = rail.querySelector('article > div:last-child');
+      const stickyStyle = getComputedStyle(sticky);
+      const railStyle = getComputedStyle(rail);
+
+      let used =
+        parseFloat(stickyStyle.paddingTop) +
+        parseFloat(stickyStyle.paddingBottom) +
+        parseFloat(railStyle.marginTop) +
+        (header?.getBoundingClientRect().height ?? 0);
+
+      if (controls) {
+        const cs = getComputedStyle(controls);
+        used += controls.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+      }
+
+      const metaHeight = meta?.getBoundingClientRect().height ?? 120;
+      const frameHeight = sticky.clientHeight - used - metaHeight - 2;
+      const widthForHeight = (frameHeight * 16) / 9;
+      const width = Math.max(320, Math.min(window.innerWidth * 0.64, widthForHeight));
+      section.style.setProperty('--lr-card-w', `${Math.round(width)}px`);
+    };
+
+    fitCards();
+    // Re-fit once web fonts settle, since they change the header height.
+    const settle = window.setTimeout(fitCards, 350);
+    window.addEventListener('resize', fitCards);
+    return () => {
+      window.clearTimeout(settle);
+      window.removeEventListener('resize', fitCards);
+    };
+  }, [language]);
+
+  // Section reveals run off scroll-linked animation where it exists (Chrome),
+  // which is GPU-driven and needs no JS. Safari and Firefox don't support
+  // animation-timeline yet and were getting no reveal at all, so drive the
+  // same motion from an IntersectionObserver there.
+  useEffect(() => {
+    const hasScrollTimeline =
+      typeof CSS !== 'undefined' && CSS.supports?.('animation-timeline: view()');
+    if (hasScrollTimeline || !('IntersectionObserver' in window)) return;
+
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR),
+    );
+    targets.forEach((el) => el.classList.add('lr-reveal'));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-revealed');
+          observer.unobserve(entry.target);
+        });
+      },
+      { rootMargin: '0px 0px -10% 0px', threshold: 0.08 },
+    );
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     let frame = 0;
     const updateScrub = () => {
@@ -292,7 +396,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       const progressBar = videoProgressBar.current;
       if (!section || !rail || !progressBar) return;
 
-      if (window.matchMedia('(max-width: 720px)').matches) {
+      if (window.matchMedia(FLAT_RAIL).matches) {
         section.style.height = 'auto';
         rail.style.transform = 'none';
         progressBar.style.width = '0%';
@@ -330,7 +434,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   const scrollVideos = (direction: -1 | 1) => {
     const section = videoSection.current;
     if (!section) return;
-    if (window.matchMedia('(max-width: 720px)').matches) {
+    if (window.matchMedia(FLAT_RAIL).matches) {
       videoRail.current?.scrollBy({ left: direction * window.innerWidth * 0.88, behavior: 'smooth' });
       return;
     }
@@ -344,17 +448,17 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     <main className="legacy-revival" lang={language}>
       <header className="lr-nav" data-scrolled={scrolled}>
         <a href="#lr-main"><Logo /></a>
-        <nav key={`nav-${language}`} className="lr-nav-links">{c.nav.map((label, index) => <a key={label} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]}>{label}</a>)}</nav>
+        <nav className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]}>{label}</a>)}</nav>
         <div className="lr-nav-tools">
           <fieldset className="lr-language-picker" aria-label={c.language}>
             <Globe2 aria-hidden="true" />
-            {revivalLanguages.map((item) => <button key={item.code} type="button" title={item.name} aria-pressed={language === item.code} onClick={() => onLanguageChange(item.code)}>{item.label}</button>)}
+            {revivalLanguages.map((item) => <button key={item.code} type="button" title={item.name} aria-pressed={language === item.code} onClick={() => swapLanguage(item.code)}>{item.label}</button>)}
           </fieldset>
           <a className="lr-donate" href={GIVE} target="_blank" rel="noreferrer"><Heart aria-hidden="true" /> {c.donate}</a>
         </div>
       </header>
 
-      <div key={language} className="lr-language-content">
+      <div className={swapping ? 'lr-language-content is-swapping' : 'lr-language-content'}>
 
       <section className="lr-hero" id="lr-main">
         <div className="lr-hero-copy">
