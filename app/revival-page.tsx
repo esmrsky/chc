@@ -14,6 +14,8 @@ import {
   Play,
   Users,
   Video,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import './revival.css';
@@ -30,7 +32,7 @@ const REVEAL_SELECTOR = [
   '.lr-leadership > figure', '.lr-leadership-copy > *', '.lr-leadership-values article',
   '.lr-weekly > header > *', '.lr-service-grid article', '.lr-weekly > .lr-inline-link',
   '.lr-mission-copy > *', '.lr-mission-visuals figure', '.lr-mission-list article',
-  '.lr-watch-panel > header > *', '.lr-watch-controls', '.lr-watch-track',
+  '.lr-watch-panel > header > *', '.lr-watch-feature > *', '.lr-watch-controls', '.lr-watch-track',
   '.lr-gallery > header > *', '.lr-gallery figure',
   '.lr-visit-copy > *', '.lr-map', '.lr-give > *', '.lr-footer > *',
 ].join(', ');
@@ -93,6 +95,9 @@ const revivalCopy = {
     watchTitle: 'From the room to wherever you are.',
     watchIntro: 'Messages, conversations, testimonies, and worship from the Christian Hope YouTube channel.',
     openYoutube: 'Open on YouTube',
+    nowPlaying: 'Now playing',
+    unmute: 'Unmute',
+    mute: 'Mute',
     galleryLabel: '06 / Church as it happens',
     galleryTitle: 'Real people. Shared faith. Living hope.',
     galleryCaptions: ['Together in leadership', 'Teaching with clarity', 'Worship in the room', 'Prayer that carries us', 'One Spirit across cultures', 'Ministry behind the scenes', 'Faith shared openly', 'A living song'],
@@ -157,6 +162,9 @@ const revivalCopy = {
     watchTitle: 'Із залу — туди, де ви є.',
     watchIntro: 'Проповіді, розмови, свідчення та поклоніння з YouTube-каналу Christian Hope.',
     openYoutube: 'Відкрити на YouTube',
+    nowPlaying: 'Зараз грає',
+    unmute: 'Увімкнути звук',
+    mute: 'Вимкнути звук',
     galleryLabel: '06 / Життя церкви',
     galleryTitle: 'Справжні люди. Спільна віра. Жива надія.',
     galleryCaptions: ['Разом у лідерстві', 'Навчати зрозуміло', 'Поклоніння в залі', 'Молитва, що підтримує', 'Один Дух між культурами', 'Служіння за кадром', 'Віра, якою діляться відкрито', 'Жива пісня'],
@@ -221,6 +229,9 @@ const revivalCopy = {
     watchTitle: 'Из зала — туда, где вы находитесь.',
     watchIntro: 'Проповеди, разговоры, свидетельства и поклонение с YouTube-канала Christian Hope.',
     openYoutube: 'Открыть на YouTube',
+    nowPlaying: 'Сейчас играет',
+    unmute: 'Включить звук',
+    mute: 'Выключить звук',
     galleryLabel: '06 / Жизнь церкви',
     galleryTitle: 'Настоящие люди. Общая вера. Живая надежда.',
     galleryCaptions: ['Вместе в лидерстве', 'Учить ясно', 'Поклонение в зале', 'Молитва, которая поддерживает', 'Один Дух между культурами', 'Служение за кадром', 'Вера, которой делятся открыто', 'Живая песня'],
@@ -272,6 +283,8 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   };
   useEffect(() => () => swapTimers.current.forEach(window.clearTimeout), []);
   const nav = useRef<HTMLElement>(null);
+  const featureFrame = useRef<HTMLIFrameElement>(null);
+  const [muted, setMuted] = useState(true);
   const videoSection = useRef<HTMLElement>(null);
   const videoRail = useRef<HTMLDivElement>(null);
   const videoProgressBar = useRef<HTMLSpanElement>(null);
@@ -421,6 +434,18 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     };
   }, [language]);
 
+  // The featured player starts muted, because that is the only way a browser
+  // will autoplay it. Sound is a YouTube iframe-API command over postMessage,
+  // which needs no extra script — just enablejsapi=1 on the embed.
+  const toggleSound = () => {
+    const frame = featureFrame.current?.contentWindow;
+    const nextMuted = !muted;
+    const send = (func: string) => frame?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
+    send(nextMuted ? 'mute' : 'unMute');
+    if (!nextMuted) send('playVideo');
+    setMuted(nextMuted);
+  };
+
   const scrollVideos = (direction: -1 | 1) => {
     const rail = videoRail.current;
     if (!rail) return;
@@ -505,12 +530,32 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       <section className="lr-watch" id="lr-watch" ref={videoSection}>
         <div className="lr-watch-panel">
           <header><span>{c.watchLabel}</span><h2>{c.watchTitle}</h2><p>{c.watchIntro}</p></header>
+          <div className="lr-watch-feature">
+            <div className="lr-video-frame">
+              <iframe
+                ref={featureFrame}
+                src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+                title={videos[0].title}
+                allow="autoplay; encrypted-media; picture-in-picture; web-share"
+                allowFullScreen
+              />
+              <button type="button" className="lr-watch-sound" data-muted={muted} onClick={toggleSound}>
+                {muted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
+                <span>{muted ? c.unmute : c.mute}</span>
+              </button>
+            </div>
+            <div>
+              <span>{c.nowPlaying}</span>
+              <h3>{videos[0].title}</h3>
+              <a href={`https://www.youtube.com/watch?v=${videos[0].id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a>
+            </div>
+          </div>
+          <div className="lr-watch-track" ref={videoRail}>{videos.slice(1).map((video, index) => <article key={video.id}><div className="lr-video-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${video.id}`} title={video.title} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div><div><span>0{index + 2}</span><h3>{video.title}</h3><a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a></div></article>)}</div>
           <div className="lr-watch-controls">
             <button type="button" onClick={() => scrollVideos(-1)} aria-label="Previous videos"><ArrowLeft /></button>
             <div className="lr-watch-progress" aria-hidden="true"><span ref={videoProgressBar} /></div>
             <button type="button" onClick={() => scrollVideos(1)} aria-label="Next videos"><ArrowRight /></button>
           </div>
-          <div className="lr-watch-track" ref={videoRail}>{videos.map((video, index) => <article key={video.id}><div className="lr-video-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${video.id}`} title={video.title} loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div><div><span>0{index + 1}</span><h3>{video.title}</h3><a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a></div></article>)}</div>
         </div>
       </section>
 
