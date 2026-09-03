@@ -1,0 +1,28 @@
+# dependencies
+/node_modules
+
+# build output (docs/ IS the published site and is committed)
+/dist/
+/.next/
+/.vinext/
+/.wrangler/
+next-env.d.ts
+
+# local tooling / account-linked config
+/.openai/
+/.claude/
+/.screenshots/
+.DS_Store
+.env*
+
+# Source media library: only the images the Revival page actually renders are
+# tracked. The rest are unused masters kept locally.
+/public/media/*
+!/public/media/church-family-cinematic.webp
+!/public/media/service-preaching-01.webp
+!/public/media/service-preaching-02.webp
+!/public/media/service-worship-close.webp
+!/public/media/service-worship-wide.webp
+!/public/media/social-one-spirit-2026.webp
+!/public/media/social-prayer-2026-upscaled.webp
+!/public/media/social-studio-2026.webp

@@ -1,0 +1,12 @@
+/* Base resets for the static (GitHub Pages) build.
+   Mirrors globals.css minus Tailwind and the unused `ember-*` design system,
+   neither of which the Revival page uses. */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: #1a1a1a; color: #fff; font-family: 'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', Arial, sans-serif; }
+a { color: inherit; text-decoration: none; }
+img { display: block; width: 100%; }
+button, a { -webkit-tap-highlight-color: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
