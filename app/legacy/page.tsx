@@ -309,56 +309,6 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     return () => window.removeEventListener('scroll', updateHeader);
   }, []);
 
-  // The watch panel is a sticky 100svh box with overflow:hidden, and card width
-  // was a flat 64vw. Because the video frame is 16/9, wider viewports made the
-  // rail TALLER than the panel and the cards were silently clipped. Derive the
-  // card width from the height actually left over instead.
-  useEffect(() => {
-    const fitCards = () => {
-      const section = videoSection.current;
-      const rail = videoRail.current;
-      const sticky = rail?.parentElement;
-      if (!section || !rail || !sticky) return;
-
-      if (window.matchMedia(FLAT_RAIL).matches) {
-        section.style.removeProperty('--lr-card-w');
-        return;
-      }
-
-      const header = sticky.querySelector('header');
-      const controls = sticky.querySelector<HTMLElement>('.lr-watch-controls');
-      const meta = rail.querySelector('article > div:last-child');
-      const stickyStyle = getComputedStyle(sticky);
-      const railStyle = getComputedStyle(rail);
-
-      let used =
-        parseFloat(stickyStyle.paddingTop) +
-        parseFloat(stickyStyle.paddingBottom) +
-        parseFloat(railStyle.marginTop) +
-        (header?.getBoundingClientRect().height ?? 0);
-
-      if (controls) {
-        const cs = getComputedStyle(controls);
-        used += controls.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
-      }
-
-      const metaHeight = meta?.getBoundingClientRect().height ?? 120;
-      const frameHeight = sticky.clientHeight - used - metaHeight - 2;
-      const widthForHeight = (frameHeight * 16) / 9;
-      const width = Math.max(320, Math.min(window.innerWidth * 0.64, widthForHeight));
-      section.style.setProperty('--lr-card-w', `${Math.round(width)}px`);
-    };
-
-    fitCards();
-    // Re-fit once web fonts settle, since they change the header height.
-    const settle = window.setTimeout(fitCards, 350);
-    window.addEventListener('resize', fitCards);
-    return () => {
-      window.clearTimeout(settle);
-      window.removeEventListener('resize', fitCards);
-    };
-  }, [language]);
-
   // Section reveals run off scroll-linked animation where it exists (Chrome),
   // which is GPU-driven and needs no JS. Safari and Firefox don't support
   // animation-timeline yet and were getting no reveal at all, so drive the
