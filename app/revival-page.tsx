@@ -23,9 +23,10 @@ const YOUTUBE = 'https://www.youtube.com/@ChristianHopeChurchfl';
 const GIVE = 'https://give.tithe.ly/?formId=19ee2214-9179-41b7-b8a1-60cbb330bb9c';
 const MAP = 'https://maps.apple.com/?address=2800%20Pan%20American%20Blvd%2C%20North%20Port%2C%20FL%2034287';
 
-// The sticky horizontal scrub needs real vertical room. Below this it degrades
-// to a plain swipeable rail (see legacy.css), and the JS must not fight that.
-const FLAT_RAIL = '(max-width: 980px), (max-height: 640px)';
+// The sticky horizontal scrub runs at every width; only a genuinely short
+// viewport (landscape phones) falls back to a plain swipeable rail, and the JS
+// must not fight that. Mirrored in revival.css.
+const FLAT_RAIL = '(max-height: 560px)';
 
 // Kept in sync with the @supports (animation-timeline: view()) block in legacy.css.
 const REVEAL_SELECTOR = [
