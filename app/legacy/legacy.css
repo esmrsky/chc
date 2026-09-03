@@ -656,4 +656,6 @@
   .lr-watch-track article > div:last-child a,
   .lr-footer > div a { min-height: 44px; align-items: center; }
   .lr-inline-link { padding-bottom: 0; }
+  /* Logo doubles as the back-to-top link. */
+  .lr-nav > a:first-child { display: inline-flex; min-height: 44px; align-items: center; }
 }
