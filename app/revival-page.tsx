@@ -398,6 +398,11 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     if (!rail || !section || !progressBar) return;
 
     let frame = 0;
+    // The last offset this effect wrote. A rail scroll that does not match it
+    // came from the visitor, which is the only reliable signal of intent: a
+    // touchstart on the rail is usually just a finger about to scroll the page.
+    let written = -1;
+
     const updateScrub = () => {
       frame = 0;
       const travel = rail.scrollWidth - rail.clientWidth;
@@ -422,6 +427,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         // panning while nobody can see them.
         const progress = Math.min(1, Math.max(0, (crossed - 0.34) / 0.36));
         rail.scrollLeft = progress * pan;
+        written = rail.scrollLeft;
       }
       progressBar.style.width = `${Math.min(1, Math.max(0, rail.scrollLeft / travel)) * 100}%`;
     };
@@ -429,27 +435,22 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     const requestUpdate = () => {
       if (!frame) frame = window.requestAnimationFrame(updateScrub);
     };
-    const takeOver = () => { railManual.current = true; };
+    const onRailScroll = () => {
+      if (written >= 0 && Math.abs(rail.scrollLeft - written) > 2) railManual.current = true;
+      requestUpdate();
+    };
     const observer = new ResizeObserver(requestUpdate);
     observer.observe(rail);
     requestUpdate();
     window.addEventListener('scroll', requestUpdate, { passive: true });
     window.addEventListener('resize', requestUpdate);
-    rail.addEventListener('scroll', requestUpdate, { passive: true });
-    rail.addEventListener('wheel', takeOver, { passive: true });
-    rail.addEventListener('touchstart', takeOver, { passive: true });
-    rail.addEventListener('pointerdown', takeOver);
-    rail.addEventListener('keydown', takeOver);
+    rail.addEventListener('scroll', onRailScroll, { passive: true });
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener('scroll', requestUpdate);
       window.removeEventListener('resize', requestUpdate);
-      rail.removeEventListener('scroll', requestUpdate);
-      rail.removeEventListener('wheel', takeOver);
-      rail.removeEventListener('touchstart', takeOver);
-      rail.removeEventListener('pointerdown', takeOver);
-      rail.removeEventListener('keydown', takeOver);
+      rail.removeEventListener('scroll', onRailScroll);
     };
   }, [language]);
 
