@@ -24,9 +24,9 @@
 .lr-nav-tools > * { flex: none; }
 .lr-nav-progress { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; border-radius: 999px; background: var(--lr-brand-gradient); opacity: 0; transform: scaleX(var(--lr-progress, 0)); transform-origin: left; transition: opacity .4s ease; }
 .lr-nav[data-scrolled='true'] .lr-nav-progress { opacity: 1; }
-.lr-language-picker { gap: 4px; min-width: 0; margin: 0; padding: 5px; border: 1px solid #d8d3ca; border-radius: 999px; background: #fff; }
+.lr-language-picker { gap: 0; min-width: 0; margin: 0; padding: 5px; border: 1px solid #d8d3ca; border-radius: 999px; background: #fff; }
 .lr-language-picker > svg { width: 17px; margin: 0 4px 0 6px; color: var(--lr-orange-deep); }
-.lr-language-picker button { min-width: 36px; min-height: 32px; padding: 0 7px; border: 0; border-radius: 999px; background: transparent; color: #655f57; cursor: pointer; font-size: 10px; font-weight: 900; transition: background-color .25s ease, color .25s ease, transform .25s ease; }
+.lr-language-picker button { min-width: 38px; min-height: 32px; padding: 0 9px; border: 0; border-radius: 999px; background: transparent; color: #655f57; cursor: pointer; font-size: 10px; font-weight: 900; transition: background-color .25s ease, color .25s ease; }
 .lr-language-picker button:hover { background: rgb(255 99 21 / 12%); color: var(--lr-orange-deep); }
 .lr-language-picker button[aria-pressed='true'] { background: var(--lr-ink); color: #fff; }
 .lr-donate { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; padding: 0 17px; border-radius: 999px; background: var(--lr-orange); color: #fff; font-size: 12px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; transition: filter .25s ease, transform .25s ease, box-shadow .25s ease; }
@@ -52,13 +52,15 @@
 .lr-hero-actions a:last-child { border-color: var(--lr-orange); background: var(--lr-orange); color: #fff; }
 .lr-hero-actions a:hover { box-shadow: 0 12px 28px rgb(33 25 18 / 12%); transform: translateY(-3px); }
 .lr-hero-actions svg { width: 16px; }
-.lr-hero-collage { position: relative; z-index: 2; display: grid; align-self: stretch; grid-template-columns: 1.15fr .85fr; grid-template-rows: 1fr 1fr; gap: 9px; aspect-ratio: 107 / 100; min-height: 0; }
+.lr-hero-collage { position: relative; z-index: 2; display: grid; align-self: center; grid-template-columns: 1.52fr 1fr; gap: 10px; min-height: 0; }
+.lr-hero-video { position: relative; grid-column: 1 / -1; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--lr-r-lg); background: #171717; box-shadow: 0 22px 60px rgb(70 38 18 / 16%); }
+.lr-hero-video iframe { display: block; width: 100%; height: 100%; border: 0; }
 .lr-hero-collage figure { position: relative; min-height: 0; overflow: hidden; border-radius: var(--lr-r-lg); background: #ddd; box-shadow: 0 18px 50px rgb(70 38 18 / 12%); transition: border-radius .55s cubic-bezier(.2,.8,.2,1), transform .55s cubic-bezier(.2,.8,.2,1); }
-.lr-hero-collage .lr-hero-primary { grid-row: 1 / 3; border-radius: var(--lr-r-arch) var(--lr-r-lg) var(--lr-r-lg) var(--lr-r-lg); }
 .lr-hero-collage img { height: 100%; object-fit: cover; transition: transform .8s cubic-bezier(.2,.8,.2,1), filter .5s ease; }
-.lr-hero-collage .lr-hero-primary img { object-position: 52% center; }
-.lr-hero-collage figure:nth-child(2) img { object-position: center 20%; }
-.lr-hero-collage figure:nth-child(3) img { object-position: 42% 38%; }
+/* The left photograph sets the row height; the right one stretches to match. */
+.lr-hero-collage figure:nth-of-type(1) { aspect-ratio: 16 / 11; }
+.lr-hero-collage figure:nth-of-type(1) img { object-position: center 20%; }
+.lr-hero-collage figure:nth-of-type(2) img { object-position: 42% 38%; }
 .lr-hero-collage figure:hover { border-radius: var(--lr-r-lg); transform: translateY(-4px); }
 .lr-hero-collage figure:hover img { transform: scale(1.035); }
 .lr-marquee { overflow: hidden; padding: 18px 0; border-block: 1px solid rgb(255 255 255 / 36%); background: var(--lr-orange); color: #fff; }
@@ -138,20 +140,12 @@
 .lr-gallery h2 { font-size: clamp(55px, 6.3vw, 98px); letter-spacing: -.065em; line-height: .9; }
 .lr-watch h2 { font-size: clamp(48px, 5.6vw, 88px); letter-spacing: -.065em; line-height: .9; }
 .lr-watch-panel > header p { color: #625c54; font-size: 16px; line-height: 1.65; }
-/* Featured player, then the rail, then the controls under both. */
-.lr-watch-feature { display: grid; grid-template-columns: minmax(0, 1.42fr) minmax(0, .92fr); gap: clamp(20px, 2.6vw, 38px); align-items: center; margin-top: clamp(30px, 4vw, 52px); padding: 0 clamp(22px, 6vw, 96px); }
-.lr-watch-feature .lr-video-frame { position: relative; overflow: hidden; border-radius: var(--lr-r-lg); box-shadow: 0 30px 70px rgb(65 41 23 / 18%); }
-.lr-watch-feature > div:last-child { display: grid; gap: 13px; justify-items: start; }
-.lr-watch-feature > div:last-child > span { color: var(--lr-orange-deep); font: 800 11px/1.1 'Plus Jakarta Sans', 'Avenir Next', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.lr-watch-feature h3 { font-size: clamp(21px, 1.7vw, 28px); letter-spacing: -.025em; line-height: 1.2; }
-.lr-watch-feature > div:last-child a { display: inline-flex; align-items: center; gap: 8px; color: #655f57; font-size: 10px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
-.lr-watch-feature > div:last-child a svg { width: 15px; }
-/* Top-right rather than bottom-left: YouTube's own control bar owns the bottom. */
-.lr-watch-sound { position: absolute; z-index: 2; top: 13px; right: 13px; display: inline-flex; min-height: 40px; align-items: center; gap: 8px; padding: 0 15px; border: 0; border-radius: 999px; background: rgb(18 18 18 / 78%); color: #fff; cursor: pointer; font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; backdrop-filter: blur(10px); transition: background-color .3s ease, transform .3s ease; }
-.lr-watch-sound svg { width: 16px; }
-.lr-watch-sound:hover { background: var(--lr-orange); transform: translateY(-2px); }
-.lr-watch-sound[data-muted='false'] { background: var(--lr-orange); }
-.lr-watch-controls { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; margin: clamp(18px, 2.2vw, 28px) clamp(22px, 6vw, 96px) 0; }
+/* Thumbnail rail, then the controls under it. */
+.lr-sound { position: absolute; z-index: 3; bottom: 14px; left: 14px; display: inline-flex; min-height: 40px; align-items: center; gap: 8px; padding: 0 15px; border: 0; border-radius: 999px; background: rgb(18 18 18 / 78%); color: #fff; cursor: pointer; font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; backdrop-filter: blur(10px); transition: background-color .3s ease, transform .3s ease; }
+.lr-sound svg { width: 16px; }
+.lr-sound:hover { background: var(--lr-orange); transform: translateY(-2px); }
+.lr-sound[data-muted='false'] { background: var(--lr-orange); }
+.lr-watch-controls { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; margin: 0 clamp(22px, 6vw, 96px); }
 .lr-watch-controls button { display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid var(--lr-orange-deep); border-radius: 50%; background: transparent; color: var(--lr-orange-deep); cursor: pointer; transition: background-color .25s ease, color .25s ease, transform .25s ease; }
 .lr-watch-controls button:hover { background: var(--lr-orange); color: #fff; transform: scale(1.05); }
 .lr-watch-controls button svg { width: 18px; }
@@ -159,21 +153,40 @@
 .lr-watch-progress span { display: block; min-width: 10%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--lr-orange), var(--lr-gold)); transition: width .18s linear; }
 /* Horizontally scrollable, so swipe, trackpad and the arrows all reach every
    card; page scroll only eases it along (see revival-page.tsx). */
-.lr-watch-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 470px); align-items: start; gap: 18px; margin-top: clamp(22px, 2.8vw, 34px); padding: 6px clamp(22px, 6vw, 96px) 22px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+/* Items stretch, so every card is the height of the tallest. The generous
+   bottom padding is inside the scrollport: without it the hover shadow is
+   clipped off by the same overflow that makes the rail scroll. */
+.lr-watch-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 470px); align-items: stretch; gap: 18px; margin-top: clamp(26px, 3.4vw, 44px); padding: 10px clamp(22px, 6vw, 96px) 54px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; cursor: grab; }
+.lr-watch-track.is-dragging { cursor: grabbing; }
+.lr-watch-track.is-dragging * { cursor: grabbing; }
 .lr-watch-track::-webkit-scrollbar { display: none; }
-.lr-watch-track article { display: grid; grid-template-rows: auto auto; align-content: start; overflow: hidden; border: 1px solid #d5d0c8; border-radius: var(--lr-r-md); background: #fff; scroll-snap-align: start; transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease; }
+.lr-watch-track article { display: grid; grid-template-rows: auto 1fr; overflow: hidden; cursor: grab; border: 1px solid #d5d0c8; border-radius: var(--lr-r-md); background: #fff; scroll-snap-align: start; transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease; }
 .lr-watch-track article:hover { border-color: var(--lr-orange); box-shadow: 0 22px 55px rgb(65 41 23 / 12%); transform: translateY(-5px); }
-.lr-video-frame { width: 100%; aspect-ratio: 16 / 9; background: #171717; }
+.lr-video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #171717; }
+/* A thumbnail facade rather than eleven live embeds: the whole card can then be
+   dragged, and the page does not load eleven third-party players up front. */
+.lr-watch-play { display: block; width: 100%; height: 100%; padding: 0; border: 0; cursor: grab; }
+.lr-watch-play img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s cubic-bezier(.2, .8, .2, 1), filter .4s ease; }
+.lr-watch-play > span { position: absolute; top: 50%; left: 50%; display: grid; width: 58px; height: 58px; place-items: center; border-radius: 50%; background: rgb(18 18 18 / 62%); color: #fff; transform: translate(-50%, -50%); transition: background-color .3s ease, transform .3s cubic-bezier(.2, .8, .2, 1); backdrop-filter: blur(6px); }
+.lr-watch-play > span svg { width: 21px; margin-left: 2px; }
+.lr-watch-track article:hover .lr-watch-play img { filter: brightness(.9); transform: scale(1.05); }
+.lr-watch-track article:hover .lr-watch-play > span { background: var(--lr-orange); transform: translate(-50%, -50%) scale(1.08); }
 .lr-video-frame iframe { width: 100%; height: 100%; border: 0; }
-.lr-watch-track article > div:last-child { display: grid; grid-template-columns: auto 1fr; gap: 9px 16px; padding: 22px; }
+.lr-watch-track article > div:last-child { display: grid; align-content: space-between; grid-template-columns: auto 1fr; gap: 12px 16px; padding: 22px; }
 .lr-watch-track article > div:last-child > span { color: var(--lr-orange-deep); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
 .lr-watch-track h3 { display: -webkit-box; overflow: hidden; font-size: 19px; line-height: 1.2; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.lr-watch-track a { grid-column: 2; display: inline-flex; align-items: center; gap: 7px; color: #655f57; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+.lr-watch-track a { grid-column: 2; display: inline-flex; align-items: center; align-self: end; gap: 7px; color: #655f57; cursor: pointer; font-size: 9px; font-weight: 900; text-transform: uppercase; }
 .lr-watch-track a svg { width: 14px; }
 .lr-gallery { padding: var(--lr-section-y) var(--lr-gutter); background: #20201e; color: #fff; }
 .lr-gallery > header { padding: 0; }
-.lr-gallery > div { columns: 4; margin-top: 58px; column-gap: 9px; }
-.lr-gallery figure { position: relative; margin: 0 0 9px; overflow: hidden; border-radius: var(--lr-r-md); break-inside: avoid; }
+/* An explicit hierarchy rather than masonry: one lead frame, two secondary,
+   five small. Five columns by three rows tiles exactly for eight images, and
+   the container's aspect-ratio makes every cell square. */
+.lr-gallery > div { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 10px; margin-top: 58px; aspect-ratio: 5 / 3; }
+.lr-gallery figure { position: relative; margin: 0; overflow: hidden; border-radius: var(--lr-r-md); }
+.lr-gallery figure:nth-child(7) { grid-area: 1 / 1 / 3 / 4; }
+.lr-gallery figure:nth-child(2) { grid-area: 1 / 4 / 2 / 6; }
+.lr-gallery figure:nth-child(3) { grid-area: 2 / 4 / 3 / 6; }
 .lr-gallery img { height: auto; display: block; transition: filter .5s ease, transform .8s cubic-bezier(.2,.8,.2,1); }
 .lr-gallery figure:hover img { filter: saturate(1.08); transform: scale(1.04); }
 .lr-gallery figcaption { position: absolute; right: 12px; bottom: 12px; left: 12px; display: flex; gap: 12px; padding: 13px 15px; border-radius: 999px; background: rgb(18 18 18 / 76%); font-size: 10px; font-weight: 900; backdrop-filter: blur(12px); }
@@ -292,7 +305,6 @@
   .lr-mission-list article, .lr-mission-list article:not(:first-child) { padding: 24px 0; border-right: 0; border-bottom: 1px solid #4a4a4a; }
   .lr-mission-list article:last-child { border-bottom: 0; }
 
-  .lr-watch-feature { grid-template-columns: minmax(0, 1fr); gap: 22px; }
   .lr-visit { grid-template-columns: 1fr; }
   .lr-map { min-height: 560px; }
   .lr-give { grid-template-columns: 1fr; align-items: start; }
@@ -301,18 +313,17 @@
 
 @media (max-width: 720px) {
   .lr-nav { min-height: 76px; padding: 0 14px; }
-  .lr-language-picker { gap: 2px; }
   .lr-language-picker > svg { display: none; }
-  .lr-language-picker button { min-width: 44px; min-height: 44px; padding: 0 5px; }
+  .lr-language-picker button { min-width: 44px; min-height: 44px; padding: 0 7px; }
   .lr-donate { display: none; }
   .lr-hero { gap: 30px; margin-top: -76px; padding: 118px 16px 70px; }
   .lr-hero .lr-hero-copy { padding: 0; }
   .lr-hero h1 { font-size: clamp(40px, 12.5vw, 62px); }
   .lr-hero-copy > span { font-size: 16px; }
   .lr-hero-actions a { width: 100%; justify-content: space-between; }
-  .lr-hero-collage { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; aspect-ratio: auto; min-height: 0; gap: 8px; }
-  .lr-hero-collage .lr-hero-primary { grid-column: 1 / -1; grid-row: auto; aspect-ratio: 4 / 3; min-height: 0; }
-  .lr-hero-collage figure:not(.lr-hero-primary) { aspect-ratio: 1 / 1; min-height: 0; border-radius: var(--lr-r-md); }
+  .lr-hero-collage { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lr-hero-collage figure { border-radius: var(--lr-r-md); }
+  .lr-hero-collage figure:nth-of-type(1) { aspect-ratio: 1 / 1; }
   .legacy-revival { --lr-gutter: 16px; --lr-nav-h: 76px; --lr-section-y: 82px; --lr-r-arch: 104px; --lr-r-lg: 20px; --lr-r-md: 14px; --lr-r-sm: 10px; }
   .lr-story, .lr-leadership, .lr-weekly, .lr-missions, .lr-gallery, .lr-visit, .lr-give { padding: var(--lr-section-y) var(--lr-gutter); }
   .lr-story h2, .lr-leadership-copy h2, .lr-weekly h2, .lr-mission-copy h2, .lr-watch h2, .lr-gallery h2, .lr-visit h2, .lr-give h2 { font-size: clamp(38px, 10.5vw, 58px); }
@@ -329,10 +340,9 @@
   .lr-mission-visuals figure:last-child { display: block; }
   .lr-watch-panel { padding: var(--lr-section-y) 0 calc(var(--lr-section-y) - 18px); }
   .lr-watch-panel > header { padding: 0 16px; }
-  .lr-watch-feature { margin-top: 26px; padding: 0 16px; }
-  .lr-watch-sound { top: 10px; right: 10px; min-height: 36px; padding: 0 12px; font-size: 9px; }
-  .lr-watch-controls { margin: 22px 16px 0; }
-  .lr-watch-track { grid-auto-columns: min(84vw, 420px); margin-top: 24px; padding: 4px 16px 18px; }
+  .lr-sound { bottom: 10px; left: 10px; min-height: 36px; padding: 0 12px; font-size: 9px; }
+  .lr-watch-controls { margin: 6px 16px 0; }
+  .lr-watch-track { grid-auto-columns: min(84vw, 420px); margin-top: 26px; padding: 8px 16px 42px; }
   .lr-gallery > div { margin-top: 44px; }
   .lr-visit { gap: 45px; }
   .lr-visit address { margin-top: 30px; }
@@ -477,30 +487,18 @@
   .lr-nav-links { transition: none; }
 }
 
-/* --- Gallery masonry ------------------------------------------------------
-   Each frame carries its photograph's true ratio, so nothing is cropped AND
-   the column heights are known at layout time. Without that the browser packs
-   the columns before the lazy images report their size, and the last column
-   ends up short. Eight items also need a column count that divides them —
-   3 columns always leaves a 3/3/2 gap, so this uses 4 or 2. */
-.lr-gallery figure { aspect-ratio: 1440 / 1089; }
-.lr-gallery figure:nth-child(1), .lr-gallery figure:nth-child(6) { aspect-ratio: 1 / 1; }
-.lr-gallery figure:nth-child(4) { aspect-ratio: 1448 / 1086; }
-.lr-gallery figure:nth-child(5) { aspect-ratio: 4 / 3; }
 .lr-gallery img { width: 100%; height: 100%; display: block; object-fit: cover; }
 /* Parallax needs slack inside a frame; these frames match their image exactly. */
 .lr-gallery .lr-parallax-media { animation: none !important; translate: none !important; scale: 1 !important; }
 
-@media (max-width: 1279px) { .lr-gallery > div { columns: 2; } }
-@media (max-width: 560px) {
-  /* Two stacked hero images on a phone; the third reappears in the gallery. */
-  .lr-hero-collage { grid-template-columns: 1fr; grid-template-rows: auto auto; gap: 8px; }
-  .lr-hero-collage figure:nth-child(3) { display: none; }
-  .lr-hero-collage .lr-hero-primary { grid-column: 1 / -1; aspect-ratio: 5 / 4; }
-  .lr-hero-collage figure:nth-child(2) { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
+/* Four by three keeps the same hierarchy with the lead frame going wide
+   rather than tall, and still tiles exactly. */
+@media (max-width: 980px) {
+  .lr-gallery > div { grid-template-columns: repeat(4, 1fr); aspect-ratio: 4 / 3; }
+  .lr-gallery figure:nth-child(7) { grid-area: 1 / 1 / 2 / 4; }
+  .lr-gallery figure:nth-child(2) { grid-area: 2 / 1 / 3 / 3; }
+  .lr-gallery figure:nth-child(3) { grid-area: 2 / 3 / 3 / 5; }
 }
-
-@media (max-width: 560px)  { .lr-gallery > div { column-gap: 7px; } .lr-gallery figure { margin-bottom: 7px; } }
 
 /* --- Animated hamburger ---------------------------------------------------
    Three bars: the outer two travel to the centre and cross, the middle fades. */
@@ -536,10 +534,10 @@
    covers most of a small photo. Switch to an explicit grid: two full-width
    images anchoring 2x2 pairs, captions off so the photographs read. */
 @media (max-width: 720px) {
-  .lr-gallery > div { columns: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 40px; }
-  .lr-gallery figure { margin: 0; aspect-ratio: 4 / 3; }
-  .lr-gallery figure:nth-child(1),
-  .lr-gallery figure:nth-child(6) { grid-column: 1 / -1; aspect-ratio: 16 / 10; }
+  .lr-gallery > div { grid-template-columns: 1fr 1fr; grid-template-rows: none; gap: 8px; margin-top: 40px; aspect-ratio: auto; }
+  .lr-gallery figure, .lr-gallery figure:nth-child(2), .lr-gallery figure:nth-child(3), .lr-gallery figure:nth-child(7) { grid-area: auto; aspect-ratio: 4 / 3; }
+  .lr-gallery figure:nth-child(7),
+  .lr-gallery figure:nth-child(2) { grid-column: 1 / -1; aspect-ratio: 16 / 10; }
   .lr-gallery figcaption { display: none; }
 }
 

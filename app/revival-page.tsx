@@ -32,7 +32,7 @@ const REVEAL_SELECTOR = [
   '.lr-leadership > figure', '.lr-leadership-copy > *', '.lr-leadership-values article',
   '.lr-weekly > header > *', '.lr-service-grid article', '.lr-weekly > .lr-inline-link',
   '.lr-mission-copy > *', '.lr-mission-visuals figure', '.lr-mission-list article',
-  '.lr-watch-panel > header > *', '.lr-watch-feature > *', '.lr-watch-controls', '.lr-watch-track',
+  '.lr-watch-panel > header > *', '.lr-watch-controls', '.lr-watch-track',
   '.lr-gallery > header > *', '.lr-gallery figure',
   '.lr-visit-copy > *', '.lr-map', '.lr-give > *', '.lr-footer > *',
 ].join(', ');
@@ -96,6 +96,7 @@ const revivalCopy = {
     watchIntro: 'Messages, conversations, testimonies, and worship from the Christian Hope YouTube channel.',
     openYoutube: 'Open on YouTube',
     nowPlaying: 'Now playing',
+    play: 'Play',
     unmute: 'Unmute',
     mute: 'Mute',
     galleryLabel: '06 / Church as it happens',
@@ -163,6 +164,7 @@ const revivalCopy = {
     watchIntro: 'Проповіді, розмови, свідчення та поклоніння з YouTube-каналу Christian Hope.',
     openYoutube: 'Відкрити на YouTube',
     nowPlaying: 'Зараз грає',
+    play: 'Відтворити',
     unmute: 'Увімкнути звук',
     mute: 'Вимкнути звук',
     galleryLabel: '06 / Життя церкви',
@@ -230,6 +232,7 @@ const revivalCopy = {
     watchIntro: 'Проповеди, разговоры, свидетельства и поклонение с YouTube-канала Christian Hope.',
     openYoutube: 'Открыть на YouTube',
     nowPlaying: 'Сейчас играет',
+    play: 'Воспроизвести',
     unmute: 'Включить звук',
     mute: 'Выключить звук',
     galleryLabel: '06 / Жизнь церкви',
@@ -283,8 +286,9 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   };
   useEffect(() => () => swapTimers.current.forEach(window.clearTimeout), []);
   const nav = useRef<HTMLElement>(null);
-  const featureFrame = useRef<HTMLIFrameElement>(null);
+  const heroFrame = useRef<HTMLIFrameElement>(null);
   const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState<string | null>(null);
   const videoSection = useRef<HTMLElement>(null);
   const videoRail = useRef<HTMLDivElement>(null);
   const videoProgressBar = useRef<HTMLSpanElement>(null);
@@ -298,6 +302,11 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     { id: 'b7Pk1Ry8ifY', title: 'Разговор о вере и служении · Григорий Радион' },
     { id: 'PtdTWE0OYS0', title: 'Pastor Valentin · Conversation' },
     { id: 'dExjSLaZfDM', title: 'Ministry in Pakistan · Pastor Sohail Rana' },
+    { id: 'iXlz40MKF_E', title: 'Our Jesus is alive — He is risen!' },
+    { id: '-uIO_nfTm1E', title: 'Обновление разума · Часть 1' },
+    { id: 'bpeEPKM_2_g', title: 'Обновление разума · Часть 2' },
+    { id: 'iCarJq9_JPY', title: 'Сила Божьего Слова · Виктор Нагирняк' },
+    { id: '_qzaRlGrN94', title: 'Тайна причастия · Кто достоин' },
   ];
   const gallery = [
     'media/church-family-cinematic.webp',
@@ -391,6 +400,11 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         progressBar.style.width = '0%';
         return;
       }
+      // With a long rail, panning all of it inside one crossing would blur the
+      // cards past. Page scroll covers about five cards; drag and the arrows
+      // reach the rest.
+      const card = rail.firstElementChild as HTMLElement | null;
+      const pan = Math.min(travel, card ? (card.offsetWidth + 18) * 5 : travel);
       const rect = section.getBoundingClientRect();
       // Fully past the viewport in either direction: hand the rail back to the
       // page so a later visit starts from the top of the drift again.
@@ -402,7 +416,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         // 70% is where it is fully in view again near the top. Outside that the cards would be
         // panning while nobody can see them.
         const progress = Math.min(1, Math.max(0, (crossed - 0.34) / 0.36));
-        rail.scrollLeft = progress * travel;
+        rail.scrollLeft = progress * pan;
       }
       progressBar.style.width = `${Math.min(1, Math.max(0, rail.scrollLeft / travel)) * 100}%`;
     };
@@ -438,13 +452,78 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   // will autoplay it. Sound is a YouTube iframe-API command over postMessage,
   // which needs no extra script — just enablejsapi=1 on the embed.
   const toggleSound = () => {
-    const frame = featureFrame.current?.contentWindow;
+    const frame = heroFrame.current?.contentWindow;
     const nextMuted = !muted;
     const send = (func: string) => frame?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
     send(nextMuted ? 'mute' : 'unMute');
     if (!nextMuted) send('playVideo');
     setMuted(nextMuted);
   };
+
+  // Drag to scroll the rail. Mouse only: touch already gets native momentum
+  // scrolling from overflow-x, and capturing those pointers would fight it.
+  useEffect(() => {
+    const rail = videoRail.current;
+    if (!rail) return;
+    let down = false;
+    let startX = 0;
+    let startLeft = 0;
+    let travelled = 0;
+
+    // Capture starts only once the pointer has actually moved. Capturing on
+    // pointerdown retargets the click to the rail, and a plain click on a
+    // thumbnail would never reach its play button.
+    let capturing = false;
+
+    const onDown = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      down = true;
+      capturing = false;
+      travelled = 0;
+      startX = event.clientX;
+      startLeft = rail.scrollLeft;
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!down) return;
+      const dx = event.clientX - startX;
+      travelled = Math.max(travelled, Math.abs(dx));
+      if (!capturing && travelled > 4) {
+        capturing = true;
+        railManual.current = true;
+        rail.setPointerCapture(event.pointerId);
+        rail.classList.add('is-dragging');
+      }
+      if (capturing) rail.scrollLeft = startLeft - dx;
+    };
+    const onUp = (event: PointerEvent) => {
+      if (!down) return;
+      down = false;
+      if (capturing && rail.hasPointerCapture(event.pointerId)) rail.releasePointerCapture(event.pointerId);
+      capturing = false;
+      rail.classList.remove('is-dragging');
+    };
+    // A drag that ends over a thumbnail must not also start the video.
+    const onClick = (event: MouseEvent) => {
+      if (travelled > 6) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    rail.addEventListener('pointerdown', onDown);
+    rail.addEventListener('pointermove', onMove);
+    rail.addEventListener('pointerup', onUp);
+    rail.addEventListener('pointercancel', onUp);
+    rail.addEventListener('click', onClick, true);
+    rail.addEventListener('dragstart', (event) => event.preventDefault());
+    return () => {
+      rail.removeEventListener('pointerdown', onDown);
+      rail.removeEventListener('pointermove', onMove);
+      rail.removeEventListener('pointerup', onUp);
+      rail.removeEventListener('pointercancel', onUp);
+      rail.removeEventListener('click', onClick, true);
+    };
+  }, []);
 
   const scrollVideos = (direction: -1 | 1) => {
     const rail = videoRail.current;
@@ -464,7 +543,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
           <button type="button" className="lr-nav-toggle" data-open={menuOpen} aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen((open) => !open)}><span className="lr-burger" aria-hidden="true"><i /><i /><i /></span></button>
           <fieldset className="lr-language-picker" aria-label={c.language}>
             <Globe2 aria-hidden="true" />
-            {revivalLanguages.map((item) => <button key={item.code} type="button" title={item.name} aria-pressed={language === item.code} onClick={() => swapLanguage(item.code)}>{item.label}</button>)}
+            {revivalLanguages.map((item) => <button key={item.code} type="button" aria-label={item.name} aria-pressed={language === item.code} onClick={() => swapLanguage(item.code)}>{item.label}</button>)}
           </fieldset>
           <a className="lr-donate" href={GIVE} target="_blank" rel="noreferrer"><Heart aria-hidden="true" /> {c.donate}</a>
         </div>
@@ -485,7 +564,19 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
           </div>
         </div>
         <div className="lr-hero-collage">
-          <figure className="lr-hero-primary"><img className="lr-parallax-media" src="media/social-prayer-2026-upscaled.webp" alt={c.heroCaptions[0]} /></figure>
+          <div className="lr-hero-video">
+            <iframe
+              ref={heroFrame}
+              src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+              title={`${c.nowPlaying}: ${videos[0].title}`}
+              allow="autoplay; encrypted-media; picture-in-picture; web-share"
+              allowFullScreen
+            />
+            <button type="button" className="lr-sound" data-muted={muted} onClick={toggleSound}>
+              {muted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
+              <span>{muted ? c.unmute : c.mute}</span>
+            </button>
+          </div>
           <figure><img className="lr-parallax-media" src="media/service-preaching-01.webp" alt={c.heroCaptions[1]} /></figure>
           <figure><img className="lr-parallax-media" src="media/service-worship-wide.webp" alt={c.heroCaptions[2]} /></figure>
         </div>
@@ -530,27 +621,32 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       <section className="lr-watch" id="lr-watch" ref={videoSection}>
         <div className="lr-watch-panel">
           <header><span>{c.watchLabel}</span><h2>{c.watchTitle}</h2><p>{c.watchIntro}</p></header>
-          <div className="lr-watch-feature">
-            <div className="lr-video-frame">
-              <iframe
-                ref={featureFrame}
-                src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
-                title={videos[0].title}
-                allow="autoplay; encrypted-media; picture-in-picture; web-share"
-                allowFullScreen
-              />
-              <button type="button" className="lr-watch-sound" data-muted={muted} onClick={toggleSound}>
-                {muted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
-                <span>{muted ? c.unmute : c.mute}</span>
-              </button>
-            </div>
-            <div>
-              <span>{c.nowPlaying}</span>
-              <h3>{videos[0].title}</h3>
-              <a href={`https://www.youtube.com/watch?v=${videos[0].id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a>
-            </div>
+          <div className="lr-watch-track" ref={videoRail}>
+            {videos.map((video, index) => (
+              <article key={video.id}>
+                <div className="lr-video-frame">
+                  {playing === video.id ? (
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&playsinline=1&rel=0`}
+                      title={video.title}
+                      allow="autoplay; encrypted-media; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <button type="button" className="lr-watch-play" onClick={() => setPlaying(video.id)} aria-label={`${c.play}: ${video.title}`}>
+                      <img src={`https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`} alt="" loading="lazy" />
+                      <span aria-hidden="true"><Play fill="currentColor" /></span>
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <h3>{video.title}</h3>
+                  <a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a>
+                </div>
+              </article>
+            ))}
           </div>
-          <div className="lr-watch-track" ref={videoRail}>{videos.slice(1).map((video, index) => <article key={video.id}><div className="lr-video-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${video.id}`} title={video.title} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div><div><span>0{index + 2}</span><h3>{video.title}</h3><a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a></div></article>)}</div>
           <div className="lr-watch-controls">
             <button type="button" onClick={() => scrollVideos(-1)} aria-label="Previous videos"><ArrowLeft /></button>
             <div className="lr-watch-progress" aria-hidden="true"><span ref={videoProgressBar} /></div>
