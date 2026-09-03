@@ -644,3 +644,16 @@
 /* Deep-orange fields: accent text must not sit on its own colour. */
 .legacy-revival .lr-weekly > header > span,
 .legacy-revival .lr-give > div > span { color: var(--lr-cream); }
+
+/* --- Touch targets -------------------------------------------------------
+   Standalone links (as opposed to links inside a sentence) should be at least
+   44px tall on touch devices. These sit in cards and address blocks, so the
+   extra height is padding rather than layout change.                        */
+@media (max-width: 720px) {
+  .lr-inline-link,
+  .lr-mission-copy > a,
+  .lr-visit address a,
+  .lr-watch-track article > div:last-child a,
+  .lr-footer > div a { min-height: 44px; align-items: center; }
+  .lr-inline-link { padding-bottom: 0; }
+}
