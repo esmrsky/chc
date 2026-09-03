@@ -13,13 +13,11 @@ import {
   Heart,
   Languages,
   MapPin,
-  Menu,
   Music2,
   Play,
   Sparkles,
   Users,
   Video,
-  X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import './legacy.css';
@@ -31,7 +29,7 @@ const MAP = 'https://maps.apple.com/?address=2800%20Pan%20American%20Blvd%2C%20N
 
 // The sticky horizontal scrub needs real vertical room. Below this it degrades
 // to a plain swipeable rail (see legacy.css), and the JS must not fight that.
-const FLAT_RAIL = '(max-width: 720px), (max-height: 640px)';
+const FLAT_RAIL = '(max-width: 980px), (max-height: 640px)';
 
 // Kept in sync with the @supports (animation-timeline: view()) block in legacy.css.
 const REVEAL_SELECTOR = [
@@ -408,9 +406,9 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     <main className="legacy-revival" lang={language}>
       <header className="lr-nav" data-scrolled={scrolled}>
         <a href="#lr-main"><Logo /></a>
-        <nav id="lr-nav-menu" data-open={menuOpen} className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}</nav>
+        <nav id="lr-nav-menu" data-open={menuOpen} className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<a className="lr-menu-donate" href={GIVE} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}><Heart aria-hidden="true" /> {c.donate}</a></nav>
         <div className="lr-nav-tools">
-          <button type="button" className="lr-nav-toggle" aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen((open) => !open)}>{menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}</button>
+          <button type="button" className="lr-nav-toggle" data-open={menuOpen} aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen((open) => !open)}><span className="lr-burger" aria-hidden="true"><i /><i /><i /></span></button>
           <fieldset className="lr-language-picker" aria-label={c.language}>
             <Globe2 aria-hidden="true" />
             {revivalLanguages.map((item) => <button key={item.code} type="button" title={item.name} aria-pressed={language === item.code} onClick={() => swapLanguage(item.code)}>{item.label}</button>)}
