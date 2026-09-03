@@ -32,7 +32,7 @@ const REVEAL_SELECTOR = [
   '.lr-leadership > figure', '.lr-leadership-copy > *', '.lr-leadership-values article',
   '.lr-weekly > header > *', '.lr-service-grid article', '.lr-weekly > .lr-inline-link',
   '.lr-mission-copy > *', '.lr-mission-visuals figure', '.lr-mission-list article',
-  '.lr-watch-panel > header > *', '.lr-watch-controls', '.lr-watch-track',
+  '.lr-watch-panel > header > *', '.lr-watch-feature > *', '.lr-watch-controls', '.lr-watch-track',
   '.lr-gallery > header > *', '.lr-gallery figure',
   '.lr-visit-copy > *', '.lr-map', '.lr-give > *', '.lr-footer > *',
 ].join(', ');
@@ -287,7 +287,8 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   useEffect(() => () => swapTimers.current.forEach(window.clearTimeout), []);
   const nav = useRef<HTMLElement>(null);
   const heroFrame = useRef<HTMLIFrameElement>(null);
-  const [muted, setMuted] = useState(true);
+  const watchFrame = useRef<HTMLIFrameElement>(null);
+  const [unmuted, setUnmuted] = useState<'hero' | 'watch' | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
   const videoSection = useRef<HTMLElement>(null);
   const videoRail = useRef<HTMLDivElement>(null);
@@ -308,6 +309,10 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     { id: 'iCarJq9_JPY', title: 'Сила Божьего Слова · Виктор Нагирняк' },
     { id: '_qzaRlGrN94', title: 'Тайна причастия · Кто достоин' },
   ];
+  // The hero carries videos[0]; the watch section leads with the next one, and
+  // the rail below holds everything except the one already playing above it.
+  const featured = videos[1];
+  const railVideos = videos.filter((video) => video.id !== featured.id);
   const gallery = [
     'media/church-family-cinematic.webp',
     'media/service-preaching-01.webp',
@@ -448,17 +453,32 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     };
   }, [language]);
 
-  // The featured player starts muted, because that is the only way a browser
-  // will autoplay it. Sound is a YouTube iframe-API command over postMessage,
-  // which needs no extra script — just enablejsapi=1 on the embed.
-  const toggleSound = () => {
-    const frame = heroFrame.current?.contentWindow;
-    const nextMuted = !muted;
-    const send = (func: string) => frame?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
-    send(nextMuted ? 'mute' : 'unMute');
-    if (!nextMuted) send('playVideo');
-    setMuted(nextMuted);
+  // Both players start muted, because that is the only way a browser will
+  // autoplay them. Sound is a YouTube iframe-API command over postMessage,
+  // which needs no extra script — just enablejsapi=1 on the embed. Only one
+  // player carries sound at a time; unmuting one mutes the other.
+  const command = (frame: HTMLIFrameElement | null, func: string) =>
+    frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), '*');
+
+  const toggleSound = (which: 'hero' | 'watch') => {
+    const frames = { hero: heroFrame.current, watch: watchFrame.current };
+    if (unmuted === which) {
+      command(frames[which], 'mute');
+      setUnmuted(null);
+      return;
+    }
+    if (unmuted) command(frames[unmuted], 'mute');
+    command(frames[which], 'unMute');
+    command(frames[which], 'playVideo');
+    setUnmuted(which);
   };
+
+  const soundButton = (which: 'hero' | 'watch') => (
+    <button type="button" className="lr-sound" data-muted={unmuted !== which} onClick={() => toggleSound(which)}>
+      {unmuted === which ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
+      <span>{unmuted === which ? c.mute : c.unmute}</span>
+    </button>
+  );
 
   // Drag to scroll the rail. Mouse only: touch already gets native momentum
   // scrolling from overflow-x, and capturing those pointers would fight it.
@@ -572,10 +592,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
               allow="autoplay; encrypted-media; picture-in-picture; web-share"
               allowFullScreen
             />
-            <button type="button" className="lr-sound" data-muted={muted} onClick={toggleSound}>
-              {muted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
-              <span>{muted ? c.unmute : c.mute}</span>
-            </button>
+            {soundButton('hero')}
           </div>
           <figure><img className="lr-parallax-media" src="media/service-preaching-01.webp" alt={c.heroCaptions[1]} /></figure>
           <figure><img className="lr-parallax-media" src="media/service-worship-wide.webp" alt={c.heroCaptions[2]} /></figure>
@@ -621,8 +638,25 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       <section className="lr-watch" id="lr-watch" ref={videoSection}>
         <div className="lr-watch-panel">
           <header><span>{c.watchLabel}</span><h2>{c.watchTitle}</h2><p>{c.watchIntro}</p></header>
+          <div className="lr-watch-feature">
+            <div className="lr-video-frame">
+              <iframe
+                ref={watchFrame}
+                src={`https://www.youtube-nocookie.com/embed/${featured.id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+                title={`${c.nowPlaying}: ${featured.title}`}
+                allow="autoplay; encrypted-media; picture-in-picture; web-share"
+                allowFullScreen
+              />
+              {soundButton('watch')}
+            </div>
+            <div>
+              <span>{c.nowPlaying}</span>
+              <h3>{featured.title}</h3>
+              <a href={`https://www.youtube.com/watch?v=${featured.id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a>
+            </div>
+          </div>
           <div className="lr-watch-track" ref={videoRail}>
-            {videos.map((video, index) => (
+            {railVideos.map((video, index) => (
               <article key={video.id}>
                 <div className="lr-video-frame">
                   {playing === video.id ? (

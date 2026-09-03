@@ -140,7 +140,17 @@
 .lr-gallery h2 { font-size: clamp(55px, 6.3vw, 98px); letter-spacing: -.065em; line-height: .9; }
 .lr-watch h2 { font-size: clamp(48px, 5.6vw, 88px); letter-spacing: -.065em; line-height: .9; }
 .lr-watch-panel > header p { color: #625c54; font-size: 16px; line-height: 1.65; }
-/* Thumbnail rail, then the controls under it. */
+/* Featured player, then the thumbnail rail, then the controls under both. */
+.lr-watch-feature { display: grid; grid-template-columns: minmax(0, 1.42fr) minmax(0, .92fr); gap: clamp(20px, 2.6vw, 38px); align-items: center; margin-top: clamp(30px, 4vw, 52px); padding: 0 clamp(22px, 6vw, 96px); }
+.lr-watch-feature .lr-video-frame { overflow: hidden; border-radius: var(--lr-r-lg); box-shadow: 0 30px 70px rgb(65 41 23 / 18%); }
+.lr-watch-feature > div:last-child { display: grid; gap: 13px; justify-items: start; }
+.lr-watch-feature > div:last-child > span { color: var(--lr-orange-deep); font: 800 11px/1.1 'Plus Jakarta Sans', 'Avenir Next', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+.lr-watch-feature h3 { font-size: clamp(21px, 1.7vw, 28px); letter-spacing: -.025em; line-height: 1.2; }
+.lr-watch-feature > div:last-child a { display: inline-flex; align-items: center; gap: 8px; color: #655f57; font-size: 10px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+.lr-watch-feature > div:last-child a svg { width: 15px; }
+/* This player keeps its own controls, so the pill clears the bar at the bottom. */
+.lr-watch-feature .lr-sound { bottom: 58px; }
+
 .lr-sound { position: absolute; z-index: 3; bottom: 14px; left: 14px; display: inline-flex; min-height: 40px; align-items: center; gap: 8px; padding: 0 15px; border: 0; border-radius: 999px; background: rgb(18 18 18 / 78%); color: #fff; cursor: pointer; font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; backdrop-filter: blur(10px); transition: background-color .3s ease, transform .3s ease; }
 .lr-sound svg { width: 16px; }
 .lr-sound:hover { background: var(--lr-orange); transform: translateY(-2px); }
@@ -156,7 +166,7 @@
 /* Items stretch, so every card is the height of the tallest. The generous
    bottom padding is inside the scrollport: without it the hover shadow is
    clipped off by the same overflow that makes the rail scroll. */
-.lr-watch-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 470px); align-items: stretch; gap: 18px; margin-top: clamp(26px, 3.4vw, 44px); padding: 10px clamp(22px, 6vw, 96px) 54px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; cursor: grab; }
+.lr-watch-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 470px); align-items: stretch; gap: 18px; margin-top: clamp(24px, 3vw, 38px); padding: 10px clamp(22px, 6vw, 96px) 54px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; cursor: grab; }
 .lr-watch-track.is-dragging { cursor: grabbing; }
 .lr-watch-track.is-dragging * { cursor: grabbing; }
 .lr-watch-track::-webkit-scrollbar { display: none; }
@@ -305,6 +315,7 @@
   .lr-mission-list article, .lr-mission-list article:not(:first-child) { padding: 24px 0; border-right: 0; border-bottom: 1px solid #4a4a4a; }
   .lr-mission-list article:last-child { border-bottom: 0; }
 
+  .lr-watch-feature { grid-template-columns: minmax(0, 1fr); gap: 22px; }
   .lr-visit { grid-template-columns: 1fr; }
   .lr-map { min-height: 560px; }
   .lr-give { grid-template-columns: 1fr; align-items: start; }
@@ -341,6 +352,8 @@
   .lr-watch-panel { padding: var(--lr-section-y) 0 calc(var(--lr-section-y) - 18px); }
   .lr-watch-panel > header { padding: 0 16px; }
   .lr-sound { bottom: 10px; left: 10px; min-height: 36px; padding: 0 12px; font-size: 9px; }
+  .lr-watch-feature { margin-top: 26px; padding: 0 16px; }
+  .lr-watch-feature .lr-sound { bottom: 44px; }
   .lr-watch-controls { margin: 6px 16px 0; }
   .lr-watch-track { grid-auto-columns: min(84vw, 420px); margin-top: 26px; padding: 8px 16px 42px; }
   .lr-gallery > div { margin-top: 44px; }
