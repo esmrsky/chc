@@ -30,9 +30,11 @@ const FLAT_RAIL = '(max-height: 560px)';
 
 // Kept in sync with the @supports (animation-timeline: view()) block in legacy.css.
 const REVEAL_SELECTOR = [
-  '.lr-story > *', '.lr-leadership > *', '.lr-weekly > *', '.lr-mission-copy > *',
-  '.lr-mission-visuals', '.lr-mission-list', '.lr-watch-sticky > header > *',
-  '.lr-gallery > *', '.lr-visit > *', '.lr-give > *',
+  '.lr-story > *', '.lr-leadership > *', '.lr-leadership-values article',
+  '.lr-weekly > *', '.lr-service-grid article',
+  '.lr-mission-copy > *', '.lr-mission-visuals', '.lr-mission-list', '.lr-mission-list article',
+  '.lr-watch-sticky > header > *', '.lr-gallery > *', '.lr-gallery figure',
+  '.lr-visit > *', '.lr-give > *', '.lr-footer > *',
 ].join(', ');
 
 type RevivalLanguage = 'en' | 'uk' | 'ru';
@@ -301,19 +303,26 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     return () => window.removeEventListener('scroll', updateHeader);
   }, []);
 
-  // Section reveals run off scroll-linked animation where it exists (Chrome),
-  // which is GPU-driven and needs no JS. Safari and Firefox don't support
-  // animation-timeline yet and were getting no reveal at all, so drive the
-  // same motion from an IntersectionObserver there.
+  // Section reveals. An IntersectionObserver rather than animation-timeline:
+  // a scroll-linked range never completes for elements at the document bottom,
+  // which left the Give CTA and the footer permanently at opacity 0. Once an
+  // element has intersected here it stays revealed.
   useEffect(() => {
-    const hasScrollTimeline =
-      typeof CSS !== 'undefined' && CSS.supports?.('animation-timeline: view()');
-    if (hasScrollTimeline || !('IntersectionObserver' in window)) return;
-
     const targets = Array.from(
       document.querySelectorAll<HTMLElement>(REVEAL_SELECTOR),
     );
-    targets.forEach((el) => el.classList.add('lr-reveal'));
+    if (!('IntersectionObserver' in window)) return;
+
+    // Siblings within a group cascade slightly rather than all arriving at once.
+    const seen = new Map<Element, number>();
+    targets.forEach((el) => {
+      const parent = el.parentElement;
+      if (!parent) return;
+      const index = seen.get(parent) ?? 0;
+      seen.set(parent, index + 1);
+      el.style.setProperty('--lr-reveal-delay', `${Math.min(index, 4) * 70}ms`);
+      el.classList.add('lr-reveal');
+    });
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -323,7 +332,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
           observer.unobserve(entry.target);
         });
       },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.08 },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
     );
     targets.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
@@ -336,7 +345,8 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       const section = videoSection.current;
       const rail = videoRail.current;
       const progressBar = videoProgressBar.current;
-      if (!section || !rail || !progressBar) return;
+      const sticky = rail?.parentElement;
+      if (!section || !rail || !progressBar || !sticky) return;
 
       if (window.matchMedia(FLAT_RAIL).matches) {
         section.style.height = 'auto';
@@ -346,12 +356,18 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         return;
       }
 
+      // Scrub faster than 1:1 so the section is not several screens tall just to
+      // pan six cards, and size it from the panel rather than the viewport so
+      // there is no dead run after the last card.
       const travel = Math.max(0, rail.scrollWidth - window.innerWidth);
-      const scrollLength = Math.max(travel, window.innerHeight * 0.8);
+      const scrollLength = Math.min(
+        Math.max(travel * 0.55, window.innerHeight * 0.45),
+        window.innerHeight * 1.25,
+      );
       const sectionTop = section.getBoundingClientRect().top + window.scrollY;
       const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / scrollLength));
 
-      section.style.height = `${window.innerHeight + scrollLength}px`;
+      section.style.height = `${sticky.offsetHeight + scrollLength}px`;
       rail.style.transform = `translate3d(${-progress * travel}px, 0, 0)`;
       progressBar.style.width = `${progress * 100}%`;
       videoProgressValue.current = progress;
