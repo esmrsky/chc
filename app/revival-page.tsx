@@ -6,21 +6,17 @@ import {
   ArrowUpRight,
   AtSign,
   BookOpen,
-  Clock3,
   Globe2,
   HandHeart,
-  Headphones,
   Heart,
-  Languages,
   MapPin,
   Music2,
   Play,
-  Sparkles,
   Users,
   Video,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import './legacy.css';
+import './revival.css';
 
 const INSTAGRAM = 'https://www.instagram.com/christianhopechurchfl/';
 const YOUTUBE = 'https://www.youtube.com/@ChristianHopeChurchfl';
@@ -38,15 +34,6 @@ const REVEAL_SELECTOR = [
   '.lr-gallery > *', '.lr-visit > *', '.lr-give > *',
 ].join(', ');
 
-const concepts = [
-  { id: 'revival', number: '01', name: 'Revival', note: 'Expressive' },
-  { id: 'homecoming', number: '02', name: 'Homecoming', note: 'Pastoral' },
-  { id: 'signal', number: '03', name: 'Signal', note: 'Bold' },
-  { id: 'table', number: '04', name: 'The Table', note: 'Community' },
-  { id: 'presence', number: '05', name: 'Presence', note: 'Contemplative' },
-] as const;
-
-type Concept = (typeof concepts)[number]['id'];
 type RevivalLanguage = 'en' | 'uk' | 'ru';
 
 const revivalLanguages: { code: RevivalLanguage; label: string; name: string }[] = [
@@ -255,10 +242,6 @@ function Logo({ inverse = false, mark = false }: { inverse?: boolean; mark?: boo
     ? inverse ? 'chc-icon-white.svg' : 'chc-icon-color.svg'
     : inverse ? 'chc-logo-white.svg' : 'chc-logo-color.svg';
   return <img className={mark ? 'legacy-logo legacy-logo--mark' : 'legacy-logo'} src={src} alt="Christian Hope Church" />;
-}
-
-function VisitLink({ light = false }: { light?: boolean }) {
-  return <a className={light ? 'legacy-button legacy-button--light' : 'legacy-button'} href={MAP} target="_blank" rel="noreferrer">Get directions <ArrowUpRight /></a>;
 }
 
 function Revival({ language, onLanguageChange }: { language: RevivalLanguage; onLanguageChange: (language: RevivalLanguage) => void }) {
@@ -505,74 +488,6 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       <footer className="lr-footer" id="lr-footer"><div className="lr-footer-brand"><Logo inverse /><p>{c.footerDescription}</p></div><p>{c.footerLine}</p><div><a href={INSTAGRAM} target="_blank" rel="noreferrer"><AtSign /> Instagram</a><a href={YOUTUBE} target="_blank" rel="noreferrer"><Video /> YouTube</a></div></footer>
       </div>
     </main>
-  );
-}
-
-function Homecoming() {
-  return (
-    <main className="legacy-homecoming">
-      <header className="lh-nav"><a href="#lh-main"><Logo /></a><nav><a href="#lh-story">Our church</a><a href="#lh-sunday">This Sunday</a><a href="#lh-visit">Visit</a></nav><a href={GIVE} target="_blank" rel="noreferrer"><Heart /> Give</a></header>
-      <section className="lh-hero" id="lh-main"><div><p>CHRISTIAN HOPE · NORTH PORT</p><h1>There’s a place<br />for you <i>here.</i></h1><span>Come find a church family where faith feels honest, people know your name, and nobody has to have it all figured out.</span><a href="#lh-visit">Come this Sunday <ArrowRight /></a></div><figure><img src="media/church-family-editorial.webp" alt="Christian Hope leaders together" /><figcaption><b>WELCOME HOME</b><span>One body. Many stories. One hope.</span></figcaption></figure></section>
-      <section className="lh-story" id="lh-story"><figure><img src="media/prayer-editorial.webp" alt="Christian Hope leaders praying" /></figure><div><p>ROOM TO BREATHE</p><h2>A church that feels like people, not a production.</h2><span>We worship, open Scripture, pray honestly, share meals, and keep showing up for one another.</span></div><figure><img src="media/testimony-editorial.webp" alt="A woman sharing her story" /><figcaption>Every story matters.</figcaption></figure></section>
-      <section className="lh-sunday" id="lh-sunday"><header><p>YOUR FIRST SUNDAY</p><h2>Here’s what to expect.</h2></header><div><article><Clock3 /><span>01</span><h3>Arrive easy</h3><p>Check the weekly gathering details and come a few minutes early.</p></article><article><Music2 /><span>02</span><h3>Worship together</h3><p>Expect heartfelt worship, prayer, and teaching centered on Jesus.</p></article><article><Users /><span>03</span><h3>Stay for hello</h3><p>No pressure—just people who would genuinely like to meet you.</p></article></div></section>
-      <section className="lh-mission"><div><p>OUR GLOBAL FAMILY</p><h2>Rooted at home.<br />Open to the world.</h2><span>Prayer, evangelism, and relationships across cultures carry our faith beyond the walls of a Sunday gathering.</span><a href="https://www.youtube.com/watch?v=dExjSLaZfDM" target="_blank" rel="noreferrer"><Play fill="currentColor" /> Ministry in Pakistan</a></div><figure><img src="media/social-02.jpg" alt="Christian Hope leaders at a ministry conference" /></figure></section>
-      <section className="lh-visit" id="lh-visit"><div><p>COME ON OVER</p><h2>The door is open.</h2><span>We would love to welcome you and help your first visit feel simple.</span></div><address><MapPin /><strong>2800 Pan American Blvd<br />North Port, FL 34287</strong><small>See Instagram for current gathering details.</small><VisitLink /><a href={INSTAGRAM} target="_blank" rel="noreferrer">This week on Instagram <ArrowUpRight /></a></address></section>
-      <footer className="lh-footer"><Logo inverse /><p>English · Українська · Русский</p><span>North Port, Florida</span></footer>
-    </main>
-  );
-}
-
-function Signal() {
-  return (
-    <main className="legacy-signal">
-      <div className="ls-ticker"><span>CHRISTIAN HOPE CHURCH</span><p>ONE BODY / MANY STORIES / ONE HOPE</p><a href={INSTAGRAM} target="_blank" rel="noreferrer">LIVE UPDATES ↗</a></div>
-      <header className="ls-rail"><a href="#ls-main"><Logo inverse mark /></a><nav><a href="#ls-start">Start</a><a href="#ls-watch">Watch</a><a href="#ls-visit">Visit</a></nav><span>NP / FL</span></header>
-      <section className="ls-hero" id="ls-main"><div><p><Sparkles /> THIS IS YOUR SIGN</p><h1>YOU<br />BELONG<br /><i>HERE.</i></h1><a href="#ls-start">Find your next step <ArrowRight /></a></div><figure><img src="media/worship-keys-editorial.webp" alt="Worship at Christian Hope Church" /><figcaption><span>SUNDAY</span><b>HOPE<br />IS LIVE</b></figcaption></figure></section>
-      <div className="ls-marquee">WORSHIP / WORD / PRAYER / FAMILY / ДОБРО ПОЖАЛОВАТЬ / ЛАСКАВО ПРОСИМО /</div>
-      <section className="ls-belief"><span>THE SIGNAL / 01</span><h2>CHURCH ISN’T<br />A SPECTATOR<br /><i>SPORT.</i></h2><div><p>Bring your questions. Bring your story. Bring the week you actually had.</p><p>Christian Hope is built around Jesus, honest worship, practical teaching, prayer, and people who show up.</p></div></section>
-      <section className="ls-start" id="ls-start"><header><p>START WHERE YOU ARE</p><h2>DON’T JUST<br />SCROLL.<br /><span>STEP IN.</span></h2></header><div><a href="#ls-visit"><MapPin /><span>01</span><h3>Visit this Sunday</h3><p>Get the address and know what to expect.</p><ArrowUpRight /></a><a href="#ls-watch"><Headphones /><span>02</span><h3>Hear a message</h3><p>Start with a recent conversation.</p><ArrowUpRight /></a><a href={INSTAGRAM} target="_blank" rel="noreferrer"><Users /><span>03</span><h3>Meet the community</h3><p>See what is happening this week.</p><ArrowUpRight /></a></div></section>
-      <section className="ls-watch" id="ls-watch"><figure><img src="media/conversation-editorial.webp" alt="A Christian Hope conversation being filmed" /></figure><div><p>ON DEMAND / CHC YOUTUBE</p><h2>FAITH FOR<br />REAL LIFE.</h2><a href="https://www.youtube.com/watch?v=b7Pk1Ry8ifY" target="_blank" rel="noreferrer"><Play fill="currentColor" /> Play the conversation</a></div></section>
-      <section className="ls-visit" id="ls-visit"><p>YOUR NEXT MOVE</p><h2>SEE YOU<br />IN NORTH PORT.</h2><div><MapPin /><address>2800 Pan American Blvd<br />North Port, FL 34287</address><VisitLink /></div></section>
-      <footer className="ls-footer"><Logo inverse /><span>EN / УКР / RU</span><span>© 2026 CHC</span></footer>
-    </main>
-  );
-}
-
-function Table() {
-  return (
-    <main className="legacy-table">
-      <header className="lt-nav"><a href="#lt-main"><Logo /></a><nav><a href="#lt-story">Our story</a><a href="#lt-life">Life together</a><a href="#lt-visit">Come this Sunday</a></nav></header>
-      <section className="lt-hero" id="lt-main"><figure><img src="media/church-family-editorial.webp" alt="Christian Hope leaders together" /><figcaption>Real people. Shared faith. Plenty of room.</figcaption></figure><div><p>A CHURCH FAMILY IN NORTH PORT</p><h1>Pull up<br />a chair.</h1><span>You were never meant to do life alone. Meet a warm, multicultural community learning the way of Jesus together.</span><a href="#lt-visit">Plan your first visit <ArrowRight /></a></div></section>
-      <section className="lt-story" id="lt-story"><div><p>WELCOME, REALLY.</p><h2>Come curious.<br />Come hopeful.<br /><i>Come as you are.</i></h2></div><div><strong>Whether church is familiar or completely new, there is a place to begin here.</strong><p>We worship, learn Scripture, pray for one another, and make space for friendships that carry into the rest of the week.</p></div></section>
-      <section className="lt-life" id="lt-life"><header><p>AROUND THE TABLE</p><h2>How we grow together</h2></header><div><article><span>01</span><h3>We gather</h3><p>Worship and biblical teaching give our week a center.</p></article><article><span>02</span><h3>We listen</h3><p>Questions are welcome. Stories matter. Prayer is personal.</p></article><article><span>03</span><h3>We carry</h3><p>We notice needs and show up for one another.</p></article></div><figure><img src="media/prayer-editorial.webp" alt="Christian Hope leaders praying" /><figcaption><Languages /> English · Українська · Русский</figcaption></figure></section>
-      <section className="lt-invite"><figure><img src="media/testimony-editorial.webp" alt="A woman sharing her story" /></figure><blockquote>“Church becomes home one conversation at a time.”<span>START WITH HELLO</span></blockquote></section>
-      <section className="lt-visit" id="lt-visit"><div><p>THIS SUNDAY</p><h2>We saved you a seat.</h2><span>Current gathering details are posted each week on Instagram.</span></div><address><MapPin /><strong>2800 Pan American Blvd<br />North Port, FL 34287</strong><VisitLink /><a href={INSTAGRAM} target="_blank" rel="noreferrer">See latest updates <AtSign /></a></address></section>
-      <footer className="lt-footer"><Logo inverse /><p>Encounter God · Find community · Carry hope</p><span>North Port, Florida</span></footer>
-    </main>
-  );
-}
-
-function Presence() {
-  return (
-    <main className="legacy-presence">
-      <header className="lp-nav"><a href="#lp-main"><Logo inverse mark /></a><span>Christian Hope Church</span><nav><a href="#lp-story">Discover</a><a href="#lp-visit">Visit</a></nav></header>
-      <section className="lp-hero" id="lp-main"><figure><img src="media/community-prayer-original-editorial.webp" alt="A quiet moment of prayer" /></figure><div><p>NORTH PORT, FLORIDA</p><h1>Be still.<br /><i>Hope is here.</i></h1><span>A place to encounter God, ask real questions, and become more like Jesus alongside people who care.</span><a href="#lp-story">Enter the story ↓</a></div></section>
-      <section className="lp-story" id="lp-story"><p>OUR LIFE TOGETHER</p><h2>Transformation often begins in the quiet places—an honest prayer, an open Bible, a name remembered.</h2><div><strong>Christian Hope is a multilingual church family rooted in Jesus and present to one another.</strong><p>There is space here for wonder and questions, for joy and grief, for those arriving with strong faith and those simply hoping faith might be possible.</p></div></section>
-      <section className="lp-practices"><header><p>A SHARED RHYTHM</p><h2>Small practices.<br /><i>Deep roots.</i></h2></header><div><article><span>01</span><h3>Gather</h3><p>We turn our attention toward God through worship, Scripture, and prayer.</p></article><article><span>02</span><h3>Listen</h3><p>We receive one another’s stories with patience, compassion, and hope.</p></article><article><span>03</span><h3>Practice</h3><p>We carry the way of Jesus into work, family, friendship, and service.</p></article></div></section>
-      <section className="lp-prayer"><figure><img src="media/prayer-editorial.webp" alt="Christian Hope leaders praying" /></figure><div><p>PRAYER</p><h2>You do not have to carry it alone.</h2><span>Sometimes the most meaningful next step is simply letting someone know what is heavy. There is room to receive prayer here.</span><a href="#lp-visit">Meet us this week <ArrowRight /></a></div></section>
-      <section className="lp-listen"><p>LISTEN</p><blockquote>“Faith for the life<br />you are actually living.”</blockquote><a href="https://www.youtube.com/watch?v=b7Pk1Ry8ifY" target="_blank" rel="noreferrer"><Play fill="currentColor" /> Watch a recent conversation</a></section>
-      <section className="lp-visit" id="lp-visit"><div><p>WHEN YOU’RE READY</p><h2>Come and see.</h2></div><address><MapPin /><strong>2800 Pan American Blvd<br />North Port, FL 34287</strong><small>See Instagram for current gathering details.</small><VisitLink light /></address></section>
-      <footer className="lp-footer"><Logo inverse /><p>English · Українська · Русский</p><span>© 2026 Christian Hope Church</span></footer>
-    </main>
-  );
-}
-
-function LegacySwitcher({ concept, onChange }: { concept: Concept; onChange: (concept: Concept) => void }) {
-  return (
-    <div className="legacy-switcher" aria-label="Original design direction switcher">
-      <a href="/" aria-label="Back to new concepts"><ArrowLeft /><span>New set</span></a>
-      <div>{concepts.map((item) => <button key={item.id} type="button" data-active={concept === item.id} onClick={() => onChange(item.id)}><span>{item.number}</span><b>{item.name}</b><small>{item.note}</small></button>)}</div>
-    </div>
   );
 }
 
