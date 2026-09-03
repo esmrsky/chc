@@ -13,11 +13,13 @@ import {
   Heart,
   Languages,
   MapPin,
+  Menu,
   Music2,
   Play,
   Sparkles,
   Users,
   Video,
+  X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import './legacy.css';
@@ -265,6 +267,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   const c = revivalCopy[language];
   const [scrolled, setScrolled] = useState(false);
   const [swapping, setSwapping] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Cross-fade the copy rather than remounting it. The subtree used to carry
   // key={language}, which tore down and rebuilt every image and all six video
@@ -405,8 +408,9 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     <main className="legacy-revival" lang={language}>
       <header className="lr-nav" data-scrolled={scrolled}>
         <a href="#lr-main"><Logo /></a>
-        <nav className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]}>{label}</a>)}</nav>
+        <nav id="lr-nav-menu" data-open={menuOpen} className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}</nav>
         <div className="lr-nav-tools">
+          <button type="button" className="lr-nav-toggle" aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen((open) => !open)}>{menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}</button>
           <fieldset className="lr-language-picker" aria-label={c.language}>
             <Globe2 aria-hidden="true" />
             {revivalLanguages.map((item) => <button key={item.code} type="button" title={item.name} aria-pressed={language === item.code} onClick={() => swapLanguage(item.code)}>{item.label}</button>)}
