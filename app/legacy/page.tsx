@@ -269,16 +269,23 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   // Cross-fade the copy rather than remounting it. The subtree used to carry
   // key={language}, which tore down and rebuilt every image and all six video
   // embeds on each switch — the source of the flash and layout jump.
+  const swapTimers = useRef<number[]>([]);
   const swapLanguage = (next: RevivalLanguage) => {
-    if (next === language || swapping) return;
+    if (next === language) return;
+    // A newer click supersedes one still fading, rather than being dropped.
+    swapTimers.current.forEach(window.clearTimeout);
+    swapTimers.current = [];
     setSwapping(true);
     // Timers rather than rAF: a backgrounded tab stops firing animation frames,
     // which would strand the copy mid-fade.
-    window.setTimeout(() => {
-      onLanguageChange(next);
-      window.setTimeout(() => setSwapping(false), 20);
-    }, 190);
+    swapTimers.current.push(
+      window.setTimeout(() => {
+        onLanguageChange(next);
+        swapTimers.current.push(window.setTimeout(() => setSwapping(false), 20));
+      }, 190),
+    );
   };
+  useEffect(() => () => swapTimers.current.forEach(window.clearTimeout), []);
   const videoSection = useRef<HTMLElement>(null);
   const videoRail = useRef<HTMLDivElement>(null);
   const videoProgressBar = useRef<HTMLSpanElement>(null);
