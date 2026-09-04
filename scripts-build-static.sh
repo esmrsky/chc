@@ -17,9 +17,9 @@ done
 
 cp public/chc-logo-color.svg public/chc-logo-white.svg \
    public/chc-icon-color.svg public/chc-icon-white.svg \
-   public/favicon.svg docs/
+   public/favicon.svg public/apple-touch-icon.png docs/
 
-# Open Graph card (1200x630, generated from social-one-spirit-2026-source.jpg).
+# Open Graph card, 1200x630. Regenerate with the card in assets-og/og.html.
 cp assets-og/og.jpg docs/og.jpg
 
 touch docs/.nojekyll

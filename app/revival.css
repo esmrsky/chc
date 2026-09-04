@@ -193,10 +193,8 @@
 .lr-watch-feature h3 { font-size: clamp(21px, 1.7vw, 28px); letter-spacing: -.025em; line-height: 1.2; }
 .lr-watch-feature > div:last-child a { display: inline-flex; align-items: center; gap: 8px; color: #655f57; font-size: 10px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
 .lr-watch-feature > div:last-child a svg { width: 15px; }
-/* This player keeps its own controls, so the pill clears the bar at the bottom. */
-.lr-watch-feature .lr-sound { bottom: 58px; }
 
-.lr-sound { position: absolute; z-index: 3; bottom: 14px; left: 14px; display: inline-flex; min-height: 40px; align-items: center; gap: 8px; padding: 0 15px; border: 0; border-radius: 999px; background: rgb(18 18 18 / 78%); color: #fff; cursor: pointer; font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; backdrop-filter: blur(10px); transition: background-color .3s ease, transform .3s ease; }
+.lr-sound { position: absolute; z-index: 3; bottom: 58px; left: 14px; display: inline-flex; min-height: 40px; align-items: center; gap: 8px; padding: 0 15px; border: 0; border-radius: 999px; background: rgb(18 18 18 / 78%); color: #fff; cursor: pointer; font-size: 10px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; backdrop-filter: blur(10px); transition: background-color .3s ease, transform .3s ease; }
 .lr-sound svg { width: 16px; }
 .lr-sound:hover { background: var(--lr-orange); transform: translateY(-2px); }
 .lr-sound[data-muted='false'] { background: var(--lr-orange); }
@@ -396,9 +394,10 @@
   .lr-mission-visuals figure:last-child { display: block; }
   .lr-watch-panel { padding: var(--lr-section-y) 0 calc(var(--lr-section-y) - 18px); }
   .lr-watch-panel > header { padding: 0 16px; }
-  .lr-sound { bottom: 10px; left: 10px; min-height: 36px; padding: 0 12px; font-size: 9px; }
+  /* A phone-sized player gives YouTube's control bar most of the bottom, so
+     the pill sits under the title row instead of across the scrubber. */
+  .lr-sound { top: 48px; bottom: auto; left: 10px; min-height: 36px; padding: 0 12px; font-size: 9px; }
   .lr-watch-feature { margin-top: 26px; padding: 0 16px; }
-  .lr-watch-feature .lr-sound { bottom: 44px; }
   .lr-watch-controls { margin: 6px 16px 0; }
   .lr-watch-track { grid-auto-columns: min(84vw, 420px); margin-top: 26px; padding: 8px 16px 42px; }
   .lr-gallery > div { margin-top: 44px; }
@@ -591,11 +590,16 @@
    Columns masonry gives small cells at this width, and the caption overlay
    covers most of a small photo. Switch to an explicit grid: two full-width
    images anchoring 2x2 pairs, captions off so the photographs read. */
+/* Two columns, and the same hierarchy as the wider layouts: the lead frame
+   leads. `order` rather than DOM order, and the two full-width frames sit at
+   the ends of the sequence, so no row is left with a stranded empty cell. */
 @media (max-width: 720px) {
   .lr-gallery > div { grid-template-columns: 1fr 1fr; grid-template-rows: none; gap: 8px; margin-top: 40px; aspect-ratio: auto; }
   .lr-gallery figure, .lr-gallery figure:nth-child(2), .lr-gallery figure:nth-child(3), .lr-gallery figure:nth-child(7) { grid-area: auto; aspect-ratio: 4 / 3; }
-  .lr-gallery figure:nth-child(7),
-  .lr-gallery figure:nth-child(2) { grid-column: 1 / -1; aspect-ratio: 16 / 10; }
+  .lr-gallery figure:nth-child(7) { order: -3; grid-column: 1 / -1; aspect-ratio: 16 / 10; }
+  .lr-gallery figure:nth-child(2) { order: -2; }
+  .lr-gallery figure:nth-child(3) { order: -1; }
+  .lr-gallery figure:nth-child(8) { order: 1; grid-column: 1 / -1; aspect-ratio: 16 / 10; }
   .lr-gallery figcaption { display: none; }
 }
 

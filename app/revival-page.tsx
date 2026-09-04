@@ -402,6 +402,10 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     // came from the visitor, which is the only reliable signal of intent: a
     // touchstart on the rail is usually just a finger about to scroll the page.
     let written = -1;
+    // Our own position, eased toward the scroll-derived target. Scroll events
+    // arrive coarsely during a fling, especially on a phone, so writing the
+    // target straight to scrollLeft steps and then snaps when scrolling stops.
+    let current = -1;
 
     const updateScrub = () => {
       frame = 0;
@@ -422,12 +426,21 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       if (!railManual.current) {
         const crossed = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
         // Spend the travel between 34% and 70% of the crossing: 34% is roughly
-        // where the rail clears the bottom of the viewport, 80% is where it is
-        // 70% is where it is fully in view again near the top. Outside that the cards would be
-        // panning while nobody can see them.
+        // where the rail clears the bottom of the viewport, 70% is where it is
+        // fully in view again near the top. Outside that the cards would pan
+        // while nobody can see them.
         const progress = Math.min(1, Math.max(0, (crossed - 0.34) / 0.36));
-        rail.scrollLeft = progress * pan;
+        const target = progress * pan;
+        if (current < 0) current = rail.scrollLeft;
+        const delta = target - current;
+        current = Math.max(0, Math.min(travel, Math.abs(delta) < 0.5 ? target : current + delta * 0.18));
+        rail.scrollLeft = current;
         written = rail.scrollLeft;
+        // Keep animating until it settles, so the rail glides to a stop rather
+        // than jumping to wherever the last scroll event left it.
+        if (Math.abs(target - current) > 0.3) frame = window.requestAnimationFrame(updateScrub);
+      } else {
+        current = -1;
       }
       progressBar.style.width = `${Math.min(1, Math.max(0, rail.scrollLeft / travel)) * 100}%`;
     };
@@ -473,6 +486,42 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     command(frames[which], 'playVideo');
     setUnmuted(which);
   };
+
+  // Both players now show YouTube's own controls, so sound can change without
+  // going through the pill. Listen to what the players actually report, so the
+  // label stays truthful and one player still mutes the other either way.
+  useEffect(() => {
+    const frames = () => ({ hero: heroFrame.current, watch: watchFrame.current });
+    const onMessage = (event: MessageEvent) => {
+      if (typeof event.data !== 'string') return;
+      let data: { event?: string; info?: { muted?: boolean } };
+      try { data = JSON.parse(event.data); } catch { return; }
+      if (data.event !== 'infoDelivery' || !data.info || typeof data.info.muted !== 'boolean') return;
+      const f = frames();
+      const which = event.source === f.hero?.contentWindow ? 'hero'
+        : event.source === f.watch?.contentWindow ? 'watch' : null;
+      if (!which) return;
+      const other = which === 'hero' ? 'watch' : 'hero';
+      if (data.info.muted) {
+        setUnmuted((prev) => (prev === which ? null : prev));
+      } else {
+        setUnmuted((prev) => {
+          if (prev === which) return prev;
+          command(f[other], 'mute');
+          return which;
+        });
+      }
+    };
+    // The players only report anything once the page opens their API channel.
+    const listen = () => Object.values(frames()).forEach((frame) =>
+      frame?.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'));
+    window.addEventListener('message', onMessage);
+    const timers = [window.setTimeout(listen, 1500), window.setTimeout(listen, 4000)];
+    return () => {
+      window.removeEventListener('message', onMessage);
+      timers.forEach(window.clearTimeout);
+    };
+  }, []);
 
   const soundButton = (which: 'hero' | 'watch') => (
     <button type="button" className="lr-sound" data-muted={unmuted !== which} onClick={() => toggleSound(which)}>
@@ -588,7 +637,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
           <div className="lr-hero-video">
             <iframe
               ref={heroFrame}
-              src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+              src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1`}
               title={`${c.nowPlaying}: ${videos[0].title}`}
               allow="autoplay; encrypted-media; picture-in-picture; web-share"
               allowFullScreen
