@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   AtSign,
   BookOpen,
+  ChevronDown,
   Globe2,
   HandHeart,
   Heart,
@@ -274,6 +275,8 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   const [scrolled, setScrolled] = useState(false);
   const [swapping, setSwapping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const language_ = useRef<HTMLDivElement>(null);
 
   // Cross-fade the copy rather than remounting it. The subtree used to carry
   // key={language}, which tore down and rebuilt every image and all six video
@@ -367,6 +370,20 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       window.removeEventListener('keydown', onKey);
     };
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!langOpen) return;
+    const onDown = (event: PointerEvent) => {
+      if (!language_.current?.contains(event.target as Node)) setLangOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setLangOpen(false); };
+    window.addEventListener('pointerdown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [langOpen]);
 
   // Section reveals. An IntersectionObserver rather than animation-timeline:
   // a scroll-linked range never completes for elements at the document bottom,
@@ -510,7 +527,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     const frames = () => ({ hero: heroFrame.current, watch: watchFrame.current });
     const onMessage = (event: MessageEvent) => {
       if (typeof event.data !== 'string') return;
-      let data: { event?: string; info?: { muted?: boolean; currentTime?: number; duration?: number } };
+      let data: { event?: string; info?: { muted?: boolean; currentTime?: number; duration?: number; playerState?: number } };
       try { data = JSON.parse(event.data); } catch { return; }
       if (data.event !== 'infoDelivery' || !data.info) return;
       const f = frames();
@@ -525,6 +542,13 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         const total = durations.current[which];
         const bar = which === 'hero' ? heroProgress.current : watchProgress.current;
         if (bar && total > 0) bar.style.width = `${Math.min(100, Math.max(0, (data.info.currentTime / total) * 100))}%`;
+      }
+      // Restart on end (state 0) rather than looping through a `playlist=`
+      // parameter, which makes it a playlist player and adds previous/next
+      // controls to YouTube's own mobile overlay.
+      if (data.info.playerState === 0) {
+        const frame = which === 'hero' ? heroFrame.current : watchFrame.current;
+        command(frame, 'playVideo');
       }
       if (typeof data.info.muted !== 'boolean') return;
       const other = which === 'hero' ? 'watch' : 'hero';
@@ -671,11 +695,25 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         <a href="#lr-main"><Logo /></a>
         <nav id="lr-nav-menu" data-open={menuOpen} className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} style={{ '--i': index } as CSSProperties} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<a className="lr-menu-donate" style={{ '--i': c.nav.length } as CSSProperties} href={GIVE} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}><Heart aria-hidden="true" /> {c.donate}</a></nav>
         <div className="lr-nav-tools">
-          <button type="button" className="lr-nav-toggle" data-open={menuOpen} aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen((open) => !open)}><span className="lr-burger" aria-hidden="true"><i /><i /><i /></span></button>
-          <fieldset className="lr-language-picker" aria-label={c.language}>
-            <Globe2 aria-hidden="true" />
-            {revivalLanguages.map((item) => <button key={item.code} type="button" aria-label={item.name} aria-pressed={language === item.code} onClick={() => swapLanguage(item.code)}>{item.label}</button>)}
-          </fieldset>
+          <button type="button" className="lr-nav-toggle" data-open={menuOpen} aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => { setMenuOpen((open) => !open); setLangOpen(false); }}><span className="lr-burger" aria-hidden="true"><i /><i /><i /></span></button>
+          {/* One list, two presentations: an inline segmented control with room
+              for it, a drop-down behind a globe on the phone bar, where the
+              three codes side by side crowded out the logo. */}
+          <div className="lr-language" data-open={langOpen} ref={language_}>
+            <button type="button" className="lr-language-trigger" aria-expanded={langOpen} aria-controls="lr-language-list" aria-label={c.language} onClick={() => { setLangOpen((open) => !open); setMenuOpen(false); }}>
+              <Globe2 aria-hidden="true" />
+              <b>{revivalLanguages.find((item) => item.code === language)?.label}</b>
+              <ChevronDown aria-hidden="true" />
+            </button>
+            <fieldset id="lr-language-list" className="lr-language-list" aria-label={c.language}>
+              <Globe2 aria-hidden="true" />
+              {revivalLanguages.map((item) => (
+                <button key={item.code} type="button" aria-label={item.name} aria-pressed={language === item.code} onClick={() => { swapLanguage(item.code); setLangOpen(false); }}>
+                  <span>{item.label}</span><em>{item.name}</em>
+                </button>
+              ))}
+            </fieldset>
+          </div>
           <a className="lr-donate" href={GIVE} target="_blank" rel="noreferrer"><Heart aria-hidden="true" /> {c.donate}</a>
         </div>
         <span className="lr-nav-progress" aria-hidden="true" />
@@ -698,7 +736,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
           <div className="lr-hero-video lr-player" ref={heroPlayer}>
             <iframe
               ref={heroFrame}
-              src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&controls=0&iv_load_policy=3&loop=1&playlist=${videos[0].id}`}
+              src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&controls=0&iv_load_policy=3`}
               title={`${c.nowPlaying}: ${videos[0].title}`}
               allow="autoplay; encrypted-media; picture-in-picture; web-share"
               allowFullScreen
@@ -757,7 +795,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
             <div className="lr-video-frame lr-player" ref={watchPlayer}>
               <iframe
                 ref={watchFrame}
-                src={`https://www.youtube-nocookie.com/embed/${featured.id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&controls=0&iv_load_policy=3&loop=1&playlist=${featured.id}`}
+                src={`https://www.youtube-nocookie.com/embed/${featured.id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&controls=0&iv_load_policy=3`}
                 title={`${c.nowPlaying}: ${featured.title}`}
                 allow="autoplay; encrypted-media; picture-in-picture; web-share"
                 allowFullScreen
