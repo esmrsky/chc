@@ -9,15 +9,19 @@ import {
   Globe2,
   HandHeart,
   Heart,
+  HeartHandshake,
   MapPin,
+  Maximize2,
+  Megaphone,
   Music2,
   Play,
+  Send,
   Users,
   Video,
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react';
 import './revival.css';
 
 const INSTAGRAM = 'https://www.instagram.com/christianhopechurchfl/';
@@ -95,6 +99,8 @@ const revivalCopy = {
     watchTitle: 'From the room to wherever you are.',
     watchIntro: 'Messages, conversations, testimonies, and worship from the Christian Hope YouTube channel.',
     openYoutube: 'Open on YouTube',
+    fullscreen: 'Full screen',
+    seek: 'Jump to a point in the video',
     nowPlaying: 'Now playing',
     play: 'Play',
     unmute: 'Unmute',
@@ -163,6 +169,8 @@ const revivalCopy = {
     watchTitle: 'Із залу — туди, де ви є.',
     watchIntro: 'Проповіді, розмови, свідчення та поклоніння з YouTube-каналу Christian Hope.',
     openYoutube: 'Відкрити на YouTube',
+    fullscreen: 'На весь екран',
+    seek: 'Перейти до моменту у відео',
     nowPlaying: 'Зараз грає',
     play: 'Відтворити',
     unmute: 'Увімкнути звук',
@@ -231,6 +239,8 @@ const revivalCopy = {
     watchTitle: 'Из зала — туда, где вы находитесь.',
     watchIntro: 'Проповеди, разговоры, свидетельства и поклонение с YouTube-канала Christian Hope.',
     openYoutube: 'Открыть на YouTube',
+    fullscreen: 'На весь экран',
+    seek: 'Перейти к моменту в видео',
     nowPlaying: 'Сейчас играет',
     play: 'Воспроизвести',
     unmute: 'Включить звук',
@@ -288,6 +298,12 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   const nav = useRef<HTMLElement>(null);
   const heroFrame = useRef<HTMLIFrameElement>(null);
   const watchFrame = useRef<HTMLIFrameElement>(null);
+  // The two API-driven players wear our own chrome instead of YouTube's.
+  const heroPlayer = useRef<HTMLDivElement>(null);
+  const watchPlayer = useRef<HTMLDivElement>(null);
+  const heroProgress = useRef<HTMLSpanElement>(null);
+  const watchProgress = useRef<HTMLSpanElement>(null);
+  const durations = useRef<Record<'hero' | 'watch', number>>({ hero: 0, watch: 0 });
   const [unmuted, setUnmuted] = useState<'hero' | 'watch' | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
   const videoSection = useRef<HTMLElement>(null);
@@ -494,13 +510,23 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     const frames = () => ({ hero: heroFrame.current, watch: watchFrame.current });
     const onMessage = (event: MessageEvent) => {
       if (typeof event.data !== 'string') return;
-      let data: { event?: string; info?: { muted?: boolean } };
+      let data: { event?: string; info?: { muted?: boolean; currentTime?: number; duration?: number } };
       try { data = JSON.parse(event.data); } catch { return; }
-      if (data.event !== 'infoDelivery' || !data.info || typeof data.info.muted !== 'boolean') return;
+      if (data.event !== 'infoDelivery' || !data.info) return;
       const f = frames();
       const which = event.source === f.hero?.contentWindow ? 'hero'
         : event.source === f.watch?.contentWindow ? 'watch' : null;
       if (!which) return;
+      // Duration arrives once, currentTime roughly four times a second. Write
+      // the bar straight to the DOM: at that rate a state update would rerender
+      // the whole page for a few pixels of width.
+      if (typeof data.info.duration === 'number' && data.info.duration > 0) durations.current[which] = data.info.duration;
+      if (typeof data.info.currentTime === 'number') {
+        const total = durations.current[which];
+        const bar = which === 'hero' ? heroProgress.current : watchProgress.current;
+        if (bar && total > 0) bar.style.width = `${Math.min(100, Math.max(0, (data.info.currentTime / total) * 100))}%`;
+      }
+      if (typeof data.info.muted !== 'boolean') return;
       const other = which === 'hero' ? 'watch' : 'hero';
       if (data.info.muted) {
         setUnmuted((prev) => (prev === which ? null : prev));
@@ -523,11 +549,46 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     };
   }, []);
 
-  const soundButton = (which: 'hero' | 'watch') => (
-    <button type="button" className="lr-sound" data-muted={unmuted !== which} onClick={() => toggleSound(which)}>
-      {unmuted === which ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
-      <span>{unmuted === which ? c.mute : c.unmute}</span>
-    </button>
+  // Full screen goes on our own wrapper rather than the iframe, because the
+  // iframe is inert — YouTube's own control would be unreachable.
+  const toggleFullscreen = (which: 'hero' | 'watch') => {
+    const el = (which === 'hero' ? heroPlayer : watchPlayer).current as
+      (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
+    if (!el) return;
+    // Both can reject (no user gesture, or iOS Safari, which only ever goes
+    // full screen for a real <video>); the button simply does nothing there.
+    if (document.fullscreenElement) { document.exitFullscreen().catch(() => {}); return; }
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else el.webkitRequestFullscreen?.();
+  };
+
+  const seek = (which: 'hero' | 'watch', event: ReactMouseEvent<HTMLButtonElement>) => {
+    const total = durations.current[which];
+    if (!total) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const frame = which === 'hero' ? heroFrame.current : watchFrame.current;
+    frame?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func: 'seekTo', args: [total * ratio, true] }), '*');
+  };
+
+  // Unmute, full screen, and a progress bar. YouTube's own chrome is off
+  // (controls=0) and the iframe takes no pointer events, so its hover overlay
+  // and end screen never surface.
+  const playerChrome = (which: 'hero' | 'watch') => (
+    <div className="lr-player-chrome">
+      <div className="lr-player-buttons">
+        <button type="button" className="lr-player-btn" data-active={unmuted === which} aria-label={unmuted === which ? c.mute : c.unmute} onClick={() => toggleSound(which)}>
+          {unmuted === which ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
+        </button>
+        <button type="button" className="lr-player-btn" aria-label={c.fullscreen} onClick={() => toggleFullscreen(which)}>
+          <Maximize2 aria-hidden="true" />
+        </button>
+      </div>
+      <button type="button" className="lr-player-progress" aria-label={c.seek} onClick={(event) => seek(which, event)}>
+        <span ref={which === 'hero' ? heroProgress : watchProgress} />
+      </button>
+    </div>
   );
 
   // Drag to scroll the rail. Mouse only: touch already gets native momentum
@@ -634,15 +695,15 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
           </div>
         </div>
         <div className="lr-hero-collage">
-          <div className="lr-hero-video">
+          <div className="lr-hero-video lr-player" ref={heroPlayer}>
             <iframe
               ref={heroFrame}
-              src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1`}
+              src={`https://www.youtube-nocookie.com/embed/${videos[0].id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&controls=0&iv_load_policy=3&loop=1&playlist=${videos[0].id}`}
               title={`${c.nowPlaying}: ${videos[0].title}`}
               allow="autoplay; encrypted-media; picture-in-picture; web-share"
               allowFullScreen
             />
-            {soundButton('hero')}
+            {playerChrome('hero')}
           </div>
           <figure><img className="lr-parallax-media" src="media/service-preaching-01.webp" alt={c.heroCaptions[1]} /></figure>
           <figure><img className="lr-parallax-media" src="media/service-worship-wide.webp" alt={c.heroCaptions[2]} /></figure>
@@ -682,22 +743,26 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       <section className="lr-missions" id="lr-missions">
         <div className="lr-mission-copy"><span>{c.missionLabel}</span><h2>{c.missionTitle[0]}{' '}<i>{c.missionTitle[1]}</i></h2><p>{c.missionBody}</p><a href="https://www.youtube.com/watch?v=dExjSLaZfDM" target="_blank" rel="noreferrer"><Play fill="currentColor" /> {c.missionStory}</a></div>
         <div className="lr-mission-visuals"><figure className="lr-mission-main"><img className="lr-parallax-media" src="media/social-one-spirit-2026.webp" alt={c.missionItems[1][0]} /></figure><figure><img className="lr-parallax-media" src="media/social-studio-2026.webp" alt={c.missionItems[0][0]} /></figure><figure><img className="lr-parallax-media" src="media/social-prayer-2026-upscaled.webp" alt={c.missionItems[2][0]} /></figure></div>
-        <div className="lr-mission-list">{c.missionItems.map((item, index) => <article key={item[0]}><span>0{index + 1}</span><h3>{item[0]}</h3><p>{item[1]}</p></article>)}</div>
+        <div className="lr-mission-list">{c.missionItems.map((item, index) => {
+          // Witness at home, Ukraine, sent to Miami — in that order.
+          const Icon = [Megaphone, HeartHandshake, Send][index];
+          return <article key={item[0]}><header><span><Icon aria-hidden="true" /></span><b>0{index + 1}</b></header><h3>{item[0]}</h3><p>{item[1]}</p></article>;
+        })}</div>
       </section>
 
       <section className="lr-watch" id="lr-watch" ref={videoSection}>
         <div className="lr-watch-panel">
           <header><span>{c.watchLabel}</span><h2>{c.watchTitle}</h2><p>{c.watchIntro}</p></header>
           <div className="lr-watch-feature">
-            <div className="lr-video-frame">
+            <div className="lr-video-frame lr-player" ref={watchPlayer}>
               <iframe
                 ref={watchFrame}
-                src={`https://www.youtube-nocookie.com/embed/${featured.id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+                src={`https://www.youtube-nocookie.com/embed/${featured.id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&controls=0&iv_load_policy=3&loop=1&playlist=${featured.id}`}
                 title={`${c.nowPlaying}: ${featured.title}`}
                 allow="autoplay; encrypted-media; picture-in-picture; web-share"
                 allowFullScreen
               />
-              {soundButton('watch')}
+              {playerChrome('watch')}
             </div>
             <div>
               <span>{c.nowPlaying}</span>
