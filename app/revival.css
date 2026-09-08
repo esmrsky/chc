@@ -570,6 +570,7 @@
     border-radius: 0 0 var(--lr-r-lg) var(--lr-r-lg);
     background: var(--lr-paper); box-shadow: 0 34px 74px rgb(74 35 8 / 24%);
     transform: translateY(-100%); visibility: hidden;
+    overscroll-behavior: contain;
     transition: transform .5s cubic-bezier(.22, 1, .32, 1), visibility .5s;
   }
   .lr-nav .lr-nav-links[data-open='true'] { transform: none; visibility: visible; }

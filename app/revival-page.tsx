@@ -345,6 +345,9 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
 
   useEffect(() => {
     const updateHeader = () => {
+      // While the drawer is open the body is out of flow, so window.scrollY
+      // reads 0 and says nothing about where the page actually sits.
+      if (menuOpen) return;
       setScrolled(window.scrollY > 48);
       const max = document.documentElement.scrollHeight - window.innerHeight;
       nav.current?.style.setProperty('--lr-progress', max > 0 ? String(Math.min(1, window.scrollY / max)) : '0');
@@ -356,17 +359,34 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       window.removeEventListener('scroll', updateHeader);
       window.removeEventListener('resize', updateHeader);
     };
-  }, []);
+  }, [menuOpen]);
 
   // Menu: lock the page behind the drawer, and let Escape close it.
+  // `overflow: hidden` on the body is enough on Android and desktop but iOS
+  // Safari scrolls straight through it, so the body comes out of flow at its
+  // current offset instead and is put back on close.
   useEffect(() => {
     if (!menuOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const { body } = document;
+    const offset = window.scrollY;
+    // Taking the body out of flow takes the scrollbar with it. Pad by its
+    // width so the page underneath does not jump sideways as it goes.
+    const gutter = window.innerWidth - document.documentElement.clientWidth;
+    const previous = body.style.cssText;
+    Object.assign(body.style, {
+      position: 'fixed',
+      top: `${-offset}px`,
+      left: '0',
+      right: '0',
+      overflow: 'hidden',
+      paddingRight: gutter > 0 ? `${gutter}px` : '',
+    });
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); };
     window.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = previous;
+      body.style.cssText = previous;
+      // The page sets scroll-behavior: smooth, which would animate the way back.
+      window.scrollTo({ top: offset, behavior: 'instant' });
       window.removeEventListener('keydown', onKey);
     };
   }, [menuOpen]);
