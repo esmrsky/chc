@@ -277,6 +277,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const language_ = useRef<HTMLDivElement>(null);
+  const overlayOpen = menuOpen || langOpen;
 
   // Cross-fade the copy rather than remounting it. The subtree used to carry
   // key={language}, which tore down and rebuilt every image and all six video
@@ -345,9 +346,9 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
 
   useEffect(() => {
     const updateHeader = () => {
-      // While the drawer is open the body is out of flow, so window.scrollY
+      // While an overlay is open the body is out of flow, so window.scrollY
       // reads 0 and says nothing about where the page actually sits.
-      if (menuOpen) return;
+      if (overlayOpen) return;
       setScrolled(window.scrollY > 48);
       const max = document.documentElement.scrollHeight - window.innerHeight;
       nav.current?.style.setProperty('--lr-progress', max > 0 ? String(Math.min(1, window.scrollY / max)) : '0');
@@ -359,14 +360,16 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       window.removeEventListener('scroll', updateHeader);
       window.removeEventListener('resize', updateHeader);
     };
-  }, [menuOpen]);
+  }, [overlayOpen]);
 
-  // Menu: lock the page behind the drawer, and let Escape close it.
-  // `overflow: hidden` on the body is enough on Android and desktop but iOS
-  // Safari scrolls straight through it, so the body comes out of flow at its
-  // current offset instead and is put back on close.
+  // Hold the page still behind anything that opens over it — the drawer and
+  // the language menu both. `overflow: hidden` on the body is enough on
+  // Android and desktop but iOS Safari scrolls straight through it, so the
+  // body comes out of flow at its current offset and is put back on close.
+  // Keyed on the pair, so passing straight from one to the other never
+  // unlocks in between.
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!overlayOpen) return;
     const { body } = document;
     const offset = window.scrollY;
     // Taking the body out of flow takes the scrollbar with it. Pad by its
@@ -381,14 +384,19 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       overflow: 'hidden',
       paddingRight: gutter > 0 ? `${gutter}px` : '',
     });
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); };
-    window.addEventListener('keydown', onKey);
     return () => {
       body.style.cssText = previous;
       // The page sets scroll-behavior: smooth, which would animate the way back.
       window.scrollTo({ top: offset, behavior: 'instant' });
-      window.removeEventListener('keydown', onKey);
     };
+  }, [overlayOpen]);
+
+  // Escape closes the drawer.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [menuOpen]);
 
   useEffect(() => {
