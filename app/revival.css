@@ -524,6 +524,9 @@
     cursor: pointer; font-size: 12px; font-weight: 900; letter-spacing: .04em;
     transition: border-color .3s ease, color .3s ease;
   }
+  /* УКР is wider than EN and RU, and the tools are right-aligned, so without a
+     fixed slot for the code the burger slid sideways on every switch. */
+  .lr-language-trigger b { min-width: 27px; text-align: center; }
   .lr-language-trigger > svg:first-child { width: 18px; color: var(--lr-orange-deep); }
   .lr-language-trigger > svg:last-child { width: 13px; transition: rotate .3s cubic-bezier(.2, .8, .2, 1); }
   .lr-language[data-open='true'] .lr-language-trigger { border-color: var(--lr-orange); color: var(--lr-orange-deep); }
