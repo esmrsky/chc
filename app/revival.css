@@ -667,3 +667,39 @@
   .lr-visit address a,
   .lr-mission-copy > a { min-height: 46px; align-items: center; }
 }
+
+/* ── Hero + marquee share the first screen (two-column range only) ─────────
+   The hero used to take its height from the media's aspect ratios, which are a
+   function of viewport WIDTH, while the box it has to fit inside is viewport
+   HEIGHT — so the marquee sat 90–191px below the fold at every desktop size,
+   worst on wide-and-short screens. Here the viewport sets the height and the
+   collage stretches into whatever is left; its media cover-crop to suit.
+   The hero and the marquee both derive from --lr-marquee-h rather than
+   guessing at each other's size. Placed last so it cannot lose on source
+   order. Below 981px the hero stays tall and the marquee arrives on scroll. */
+@media (min-width: 981px) {
+  .legacy-revival { --lr-marquee-h: clamp(66px, calc(36px + 3.1vw), 84px); }
+
+  .lr-hero {
+    height: calc(100svh - var(--lr-marquee-h));
+    min-height: fit-content; /* never clip the copy on a very short window */
+    padding-block: calc(var(--lr-nav-h) + clamp(18px, 4svh, 64px)) clamp(32px, 5svh, 72px);
+  }
+
+  /* The collage now fills the leftover height instead of dictating it. */
+  .lr-hero-collage { align-self: stretch; grid-template-rows: minmax(0, 1.372fr) minmax(0, 1fr); }
+  .lr-hero-collage figure:nth-of-type(1) { aspect-ratio: auto; }
+  .lr-hero-video { aspect-ratio: auto; container-type: size; }
+
+  /* An iframe cannot object-fit, so size it to cover its box and centre it.
+     Safe here: the embed is controls=0 and pointer-events:none, so a crop
+     loses no chrome. cq units read the box, so the two stay in step. */
+  .lr-hero-video iframe {
+    position: absolute; top: 50%; left: 50%; translate: -50% -50%;
+    width: max(100cqw, calc(100cqh * 16 / 9));
+    height: max(100cqh, calc(100cqw * 9 / 16));
+  }
+
+  .lr-marquee { display: flex; align-items: center; height: var(--lr-marquee-h); padding-block: 0; }
+  .lr-marquee-track { flex-shrink: 0; } /* a flex child would otherwise compress below max-content */
+}

@@ -8,10 +8,10 @@ church family in North Port, Florida.
 ## What this is
 
 A single-page site built as a React client component. The page and all of its
-copy live in [`app/legacy/page.tsx`](app/legacy/page.tsx); styling is in
-[`app/legacy/legacy.css`](app/legacy/legacy.css). Copy for all three languages
-is held in the `revivalCopy` object and swapped client-side by the language
-picker in the header.
+copy live in [`app/revival-page.tsx`](app/revival-page.tsx); styling is in
+[`app/revival.css`](app/revival.css). Copy for all three languages is held in
+the `revivalCopy` object and swapped client-side by the language picker in the
+header.
 
 ## Builds
 
@@ -21,12 +21,27 @@ There are two build targets against the same source.
 
 ```bash
 npm install
-npx vite build --config vite.static.config.ts
+./scripts-build-static.sh
 ```
 
+⚠️ **Run the script, not `vite build` on its own.** Vite empties `docs/`, and
+only the script copies the non-bundled files back in afterwards: `public/media`,
+the logos, `favicon.svg`, `apple-touch-icon.png`, `og.jpg` and **`.nojekyll`**.
+Running the bare `npx vite build --config vite.static.config.ts` deletes all of
+them. The missing `.nojekyll` is the dangerous one — GitHub Pages would then run
+Jekyll over the published branch, and a failed Jekyll build is silent: the URL
+keeps serving the last good build while every push is discarded.
+
 Outputs to `docs/`, which GitHub Pages serves from the `main` branch. Base path
-is `/chc/`; asset references in the source are relative so they resolve both
-under that sub-path and at a domain root.
+is `/chc/`, and the built `index.html` references its assets under that prefix
+absolutely — so serving `docs/` at a domain root 404s everything. To preview the
+build locally, symlink it under the expected prefix:
+
+```bash
+mkdir -p /tmp/chc-preview && ln -sfn "$PWD/docs" /tmp/chc-preview/chc && (cd /tmp/chc-preview && python3 -m http.server 8732)
+```
+
+Then open http://localhost:8732/chc/.
 
 **Cloudflare Workers (vinext RSC)** — the original target.
 
@@ -39,9 +54,12 @@ This target additionally needs `.openai/hosting.json`, which is not tracked here
 
 ## Notes
 
-- `components/ui/` is an unused shadcn scaffold; nothing imports it.
-- `app/legacy/page.tsx` also contains four earlier design concepts
-  (`Homecoming`, `Signal`, `Table`, `Presence`) that are no longer rendered.
-  They are tree-shaken out of the static bundle.
-- Only the eight images the page actually renders are tracked in
-  `public/media/`.
+- Only the eight images the page actually renders are tracked in `public/media/`.
+- The hero is sized to share the first screen with the marquee below it at
+  widths of 981px and up. Its height comes from the viewport, and the collage
+  stretches into whatever is left — the media carry no `aspect-ratio` in that
+  range and cover-crop instead. The hero and the marquee both derive from
+  `--lr-marquee-h` so they stay in step. Below 981px the layout stacks, the hero
+  runs tall, and the marquee arrives on scroll. That block sits last in
+  `revival.css` deliberately: media queries add no specificity, so it has to
+  come after the base rules it overrides.
