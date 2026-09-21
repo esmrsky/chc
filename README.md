@@ -26,11 +26,21 @@ npm install
 
 ⚠️ **Run the script, not `vite build` on its own.** Vite empties `docs/`, and
 only the script copies the non-bundled files back in afterwards: `public/media`,
-the logos, `favicon.svg`, `apple-touch-icon.png`, `og.jpg` and **`.nojekyll`**.
+the logos, `favicon.svg`, `apple-touch-icon.png`, `og.jpg` and `.nojekyll`.
 Running the bare `npx vite build --config vite.static.config.ts` deletes all of
-them. The missing `.nojekyll` is the dangerous one — GitHub Pages would then run
-Jekyll over the published branch, and a failed Jekyll build is silent: the URL
-keeps serving the last good build while every push is discarded.
+them, so every image, the logo and the OG card break on the live site.
+
+`.nojekyll` is a safeguard rather than load-bearing today: Pages deploys this
+repo through the Actions workflow in `.github/workflows/pages.yml`
+(`build_type: workflow`), so Jekyll never sees the files. It matters only if
+Pages is ever switched back to building from the branch, where Jekyll chokes on
+`{{` and fails **silently** — the URL keeps serving the last good build while
+every push is discarded. Keep the file.
+
+Note that `gh api repos/esmrsky/chc/pages/builds/latest` reports the *legacy*
+build record, which is stale and still reads `errored` from before the switch to
+workflow deploys. Check `gh run list` instead, and confirm the live URL's asset
+hash changed.
 
 Outputs to `docs/`, which GitHub Pages serves from the `main` branch. Base path
 is `/chc/`, and the built `index.html` references its assets under that prefix
