@@ -11,7 +11,10 @@ A single-page site built as a React client component. The page and all of its
 copy live in [`app/revival-page.tsx`](app/revival-page.tsx); styling is in
 [`app/revival.css`](app/revival.css). Copy for all three languages is held in
 the `revivalCopy` object and swapped client-side by the language picker in the
-header.
+header. Switching changes the words in place (a short view-transition cross-fade
+where supported) and never reloads. The choice is remembered on the device and
+written to the address as `?lang=uk` or `?lang=ru`, so a shared link opens in
+that language; a first visit with no choice follows the browser's language.
 
 ## Builds
 

@@ -23,6 +23,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { type CSSProperties, type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import './revival.css';
 
 const INSTAGRAM = 'https://www.instagram.com/christianhopechurchfl/';
@@ -52,6 +53,7 @@ const revivalLanguages: { code: RevivalLanguage; label: string; name: string }[]
 
 const revivalCopy = {
   en: {
+    pageTitle: 'Christian Hope Church | North Port, Florida',
     language: 'Language',
     nav: ['Our church', 'Leadership', 'Missions', 'Watch', 'Visit'],
     donate: 'Donate',
@@ -122,6 +124,7 @@ const revivalCopy = {
     footerDescription: 'A church family in North Port with roots in Ukraine, following Jesus in three languages and carrying living hope wherever it is sent.',
   },
   uk: {
+    pageTitle: 'Християнська надія · Christian Hope Church | Норт-Порт, Флорида',
     language: 'Мова',
     nav: ['Про церкву', 'Лідерство', 'Місія', 'Дивитися', 'Завітайте'],
     donate: 'Пожертвувати',
@@ -192,6 +195,7 @@ const revivalCopy = {
     footerDescription: 'Церковна родина в Норт-Порті з корінням в Україні: йдемо за Ісусом трьома мовами й несемо живу надію туди, куди посилає Бог.',
   },
   ru: {
+    pageTitle: 'Христианская Надежда · Christian Hope Church | Норт-Порт, Флорида',
     language: 'Язык',
     nav: ['О церкви', 'Лидерство', 'Миссия', 'Смотреть', 'Посетить'],
     donate: 'Пожертвовать',
@@ -273,32 +277,32 @@ function Logo({ inverse = false, mark = false }: { inverse?: boolean; mark?: boo
 function Revival({ language, onLanguageChange }: { language: RevivalLanguage; onLanguageChange: (language: RevivalLanguage) => void }) {
   const c = revivalCopy[language];
   const [scrolled, setScrolled] = useState(false);
-  const [swapping, setSwapping] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const language_ = useRef<HTMLDivElement>(null);
   const overlayOpen = menuOpen || langOpen;
 
-  // Cross-fade the copy rather than remounting it. The subtree used to carry
-  // key={language}, which tore down and rebuilt every image and all six video
-  // embeds on each switch — the source of the flash and layout jump.
-  const swapTimers = useRef<number[]>([]);
+  // The words change in place; nothing else on the page is touched, so the
+  // videos keep playing and the scroll position holds. Where the browser has
+  // view transitions the old and new words cross-fade for a fifth of a second;
+  // elsewhere they simply swap. (This used to fade the whole page out and back
+  // in, which read as a reload.)
   const swapLanguage = (next: RevivalLanguage) => {
     if (next === language) return;
-    // A newer click supersedes one still fading, rather than being dropped.
-    swapTimers.current.forEach(window.clearTimeout);
-    swapTimers.current = [];
-    setSwapping(true);
-    // Timers rather than rAF: a backgrounded tab stops firing animation frames,
-    // which would strand the copy mid-fade.
-    swapTimers.current.push(
-      window.setTimeout(() => {
-        onLanguageChange(next);
-        swapTimers.current.push(window.setTimeout(() => setSwapping(false), 20));
-      }, 190),
-    );
+    const apply = () => flushSync(() => onLanguageChange(next));
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!document.startViewTransition || reduce || document.hidden) { apply(); return; }
+    document.startViewTransition(apply);
   };
-  useEffect(() => () => swapTimers.current.forEach(window.clearTimeout), []);
+
+  // Keep the document itself in the chosen language: <html lang> for screen
+  // readers and hyphenation, the tab title, and the description.
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.title = c.pageTitle;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', c.heroBody);
+  }, [language, c]);
+
   const nav = useRef<HTMLElement>(null);
   const heroFrame = useRef<HTMLIFrameElement>(null);
   const watchFrame = useRef<HTMLIFrameElement>(null);
@@ -526,7 +530,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       window.removeEventListener('resize', requestUpdate);
       rail.removeEventListener('scroll', onRailScroll);
     };
-  }, [language]);
+  }, []);
 
   // Both players start muted, because that is the only way a browser will
   // autoplay them. Sound is a YouTube iframe-API command over postMessage,
@@ -591,13 +595,24 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       }
     };
     // The players only report anything once the page opens their API channel.
-    const listen = () => Object.values(frames()).forEach((frame) =>
-      frame?.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'));
+    // The watch player is lazy, so it may load long after the page does; each
+    // frame is asked again shortly after its own load as well.
+    const hello = (frame: HTMLIFrameElement | null) =>
+      frame?.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*');
+    const listen = () => Object.values(frames()).forEach(hello);
     window.addEventListener('message', onMessage);
     const timers = [window.setTimeout(listen, 1500), window.setTimeout(listen, 4000)];
+    const onLoads = Object.values(frames()).map((frame) => {
+      const onLoad = () => {
+        timers.push(window.setTimeout(() => hello(frame), 600), window.setTimeout(() => hello(frame), 2500));
+      };
+      frame?.addEventListener('load', onLoad);
+      return () => frame?.removeEventListener('load', onLoad);
+    });
     return () => {
       window.removeEventListener('message', onMessage);
       timers.forEach(window.clearTimeout);
+      onLoads.forEach((off) => off());
     };
   }, []);
 
@@ -721,7 +736,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     <main className="legacy-revival" lang={language}>
       <header className="lr-nav" data-scrolled={scrolled} ref={nav}>
         <a href="#lr-main"><Logo /></a>
-        <nav id="lr-nav-menu" data-open={menuOpen} className={swapping ? 'lr-nav-links is-swapping' : 'lr-nav-links'}>{c.nav.map((label, index) => <a key={label} style={{ '--i': index } as CSSProperties} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<a className="lr-menu-donate" style={{ '--i': c.nav.length } as CSSProperties} href={GIVE} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}><Heart aria-hidden="true" /> {c.donate}</a></nav>
+        <nav id="lr-nav-menu" data-open={menuOpen} className="lr-nav-links">{c.nav.map((label, index) => <a key={index} style={{ '--i': index } as CSSProperties} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<a className="lr-menu-donate" style={{ '--i': c.nav.length } as CSSProperties} href={GIVE} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}><Heart aria-hidden="true" /> {c.donate}</a></nav>
         <div className="lr-nav-tools">
           <button type="button" className="lr-nav-toggle" data-open={menuOpen} aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => { setMenuOpen((open) => !open); setLangOpen(false); }}><span className="lr-burger" aria-hidden="true"><i /><i /><i /></span></button>
           {/* One list, two presentations: an inline segmented control with room
@@ -736,7 +751,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
             <fieldset id="lr-language-list" className="lr-language-list" aria-label={c.language}>
               <Globe2 aria-hidden="true" />
               {revivalLanguages.map((item) => (
-                <button key={item.code} type="button" aria-label={item.name} aria-pressed={language === item.code} onClick={() => { swapLanguage(item.code); setLangOpen(false); }}>
+                <button key={item.code} type="button" aria-label={item.name} aria-pressed={language === item.code} onClick={() => { setLangOpen(false); swapLanguage(item.code); }}>
                   <span>{item.label}</span><em>{item.name}</em>
                 </button>
               ))}
@@ -748,7 +763,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       </header>
       <div className="lr-nav-scrim" data-open={menuOpen} aria-hidden="true" onClick={() => setMenuOpen(false)} />
 
-      <div className={swapping ? 'lr-language-content is-swapping' : 'lr-language-content'}>
+      <div className="lr-language-content">
 
       <section className="lr-hero" id="lr-main">
         <div className="lr-hero-copy">
@@ -795,13 +810,13 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       <section className="lr-leadership" id="lr-leadership">
         <figure><img className="lr-parallax-media" src="media/church-family-cinematic.webp" alt={c.leadershipImageAlt} loading="lazy" /><figcaption>{c.leadershipNote}</figcaption></figure>
         <div className="lr-leadership-copy"><span>{c.leadershipLabel}</span><h2>{c.leadershipTitle[0]}{' '}<i>{c.leadershipTitle[1]}</i></h2><strong>{c.leadershipLead}</strong><p>{c.leadershipBody}</p></div>
-        <div className="lr-leadership-values">{c.leadershipValues.map((item, index) => <article key={item[0]}><span>0{index + 1}</span><div><h3>{item[0]}</h3><p>{item[1]}</p></div></article>)}</div>
+        <div className="lr-leadership-values">{c.leadershipValues.map((item, index) => <article key={index}><span>0{index + 1}</span><div><h3>{item[0]}</h3><p>{item[1]}</p></div></article>)}</div>
       </section>
 
       <section className="lr-weekly" id="lr-weekly">
         <header><span>{c.weeklyLabel}</span><h2>{c.weeklyTitle}</h2><p>{c.weeklyIntro}</p></header>
         <div className="lr-service-grid">
-          {c.services.map((service, index) => <article key={service[0]}><span>0{index + 1}</span>{[Music2, HandHeart, Users, BookOpen].map((Icon, iconIndex) => iconIndex === index ? <Icon key={service[0]} aria-hidden="true" /> : null)}<h3>{service[0]}</h3><p>{service[1]}</p><small>{service[2]}</small></article>)}
+          {c.services.map((service, index) => <article key={index}><span>0{index + 1}</span>{[Music2, HandHeart, Users, BookOpen].map((Icon, iconIndex) => iconIndex === index ? <Icon key={iconIndex} aria-hidden="true" /> : null)}<h3>{service[0]}</h3><p>{service[1]}</p><small>{service[2]}</small></article>)}
         </div>
         <a className="lr-inline-link" href={INSTAGRAM} target="_blank" rel="noreferrer"><AtSign /> {c.currentUpdates} <ArrowUpRight /></a>
       </section>
@@ -812,7 +827,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         <div className="lr-mission-list">{c.missionItems.map((item, index) => {
           // Witness at home, Ukraine, sent to Miami — in that order.
           const Icon = [Megaphone, HeartHandshake, Send][index];
-          return <article key={item[0]}><header><span><Icon aria-hidden="true" /></span><b>0{index + 1}</b></header><h3>{item[0]}</h3><p>{item[1]}</p></article>;
+          return <article key={index}><header><span><Icon aria-hidden="true" /></span><b>0{index + 1}</b></header><h3>{item[0]}</h3><p>{item[1]}</p></article>;
         })}</div>
       </section>
 
@@ -825,6 +840,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
                 ref={watchFrame}
                 src={`https://www.youtube-nocookie.com/embed/${featured.id}?autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&controls=0&iv_load_policy=3`}
                 title={`${c.nowPlaying}: ${featured.title}`}
+                loading="lazy"
                 allow="autoplay; encrypted-media; picture-in-picture; web-share"
                 allowFullScreen
               />
@@ -894,11 +910,42 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
   );
 }
 
+const LANGUAGE_KEY = 'chc-language';
+const isLanguage = (value: unknown): value is RevivalLanguage =>
+  value === 'en' || value === 'uk' || value === 'ru';
+
+// A link with ?lang=uk opens in Ukrainian; otherwise the visitor's last choice;
+// otherwise their browser's language when it is one we speak; otherwise English.
+// Read once, before the first render, so the page never paints in the wrong one.
+function initialLanguage(): RevivalLanguage {
+  if (typeof window === 'undefined') return 'en';
+  const fromUrl = new URLSearchParams(window.location.search).get('lang');
+  if (isLanguage(fromUrl)) return fromUrl;
+  try {
+    const saved = window.localStorage.getItem(LANGUAGE_KEY);
+    if (isLanguage(saved)) return saved;
+  } catch { /* storage blocked: fall through */ }
+  for (const tag of navigator.languages ?? [navigator.language]) {
+    const code = tag?.slice(0, 2).toLowerCase();
+    if (isLanguage(code)) return code;
+  }
+  return 'en';
+}
+
 export default function RevivalPage() {
-  const [revivalLanguage, setRevivalLanguage] = useState<RevivalLanguage>('en');
+  const [revivalLanguage, setRevivalLanguage] = useState<RevivalLanguage>(initialLanguage);
+  const changeLanguage = (next: RevivalLanguage) => {
+    setRevivalLanguage(next);
+    try { window.localStorage.setItem(LANGUAGE_KEY, next); } catch { /* not saved; still switches */ }
+    // The address follows the choice, so a shared link opens in that language.
+    // replaceState, not a navigation: nothing reloads.
+    const url = new URL(window.location.href);
+    if (next === 'en') url.searchParams.delete('lang'); else url.searchParams.set('lang', next);
+    window.history.replaceState(window.history.state, '', url);
+  };
   return (
     <div className="legacy-stage" data-concept="revival">
-      <Revival language={revivalLanguage} onLanguageChange={setRevivalLanguage} />
+      <Revival language={revivalLanguage} onLanguageChange={changeLanguage} />
     </div>
   );
 }
