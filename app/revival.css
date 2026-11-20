@@ -55,32 +55,92 @@
 .legacy-revival :is(p, strong, figcaption) { text-wrap: pretty; }
 .legacy-revival :is(a, button):focus-visible { outline: 3px solid var(--lr-gold); outline-offset: 4px; }
 .legacy-revival section > header > span, .lr-watch-panel > header > span, .lr-story > span, .lr-leadership-copy > span, .lr-mission-copy > span, .lr-visit-copy > span, .lr-give > div > span { color: var(--lr-orange-deep); font: 800 11px/1.1 'Plus Jakarta Sans', 'Avenir Next', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
-.lr-nav { position: sticky; z-index: 20; top: 0; display: grid; grid-template-columns: 220px 1fr auto; gap: 28px; align-items: center; min-height: 96px; padding: 0 clamp(20px, 4vw, 64px); border-bottom: 1px solid transparent; background: transparent; box-shadow: 0 0 0 rgb(0 0 0 / 0%); backdrop-filter: blur(0) saturate(1); transition: min-height .45s cubic-bezier(.2,.8,.2,1), background-color .45s ease, border-color .45s ease, box-shadow .45s ease, backdrop-filter .45s ease; }
-.lr-nav[data-scrolled='true'] { min-height: 78px; border-color: rgb(26 26 26 / 12%); background: rgb(255 250 245 / 92%); box-shadow: 0 14px 40px rgb(74 35 8 / 8%); backdrop-filter: blur(20px) saturate(1.15); }
+.lr-nav { position: sticky; z-index: 20; top: 0; display: grid; grid-template-columns: 220px 1fr auto; gap: 28px; align-items: center; min-height: 96px; padding: 0 clamp(20px, 4vw, 64px); border-bottom: 1px solid transparent; background: transparent; color: var(--nav-ink); box-shadow: 0 0 0 rgb(0 0 0 / 0%); backdrop-filter: blur(0) saturate(1); transition: color .45s ease, min-height .45s cubic-bezier(.2,.8,.2,1), background-color .45s ease, border-color .45s ease, box-shadow .45s ease, backdrop-filter .45s ease; }
+.lr-nav[data-scrolled='true'] { min-height: 78px; border-color: var(--nav-line); background: var(--nav-bg); box-shadow: 0 14px 40px var(--nav-shadow); backdrop-filter: blur(20px) saturate(1.15); }
 .lr-nav nav { display: flex; justify-content: center; gap: clamp(18px, 2.5vw, 42px); font-size: 14px; font-weight: 900; letter-spacing: .055em; text-transform: uppercase; }
 .lr-nav nav a { position: relative; padding: 17px 0; white-space: nowrap; transition: color .25s ease; }
-.lr-nav nav a::after { position: absolute; right: 0; bottom: 10px; left: 0; height: 2px; background: var(--lr-orange); content: ''; transform: scaleX(0); transform-origin: right; transition: transform .28s cubic-bezier(.2,.8,.2,1); }
-.lr-nav nav a:hover { color: var(--lr-orange-deep); }
+.lr-nav nav a::after { position: absolute; right: 0; bottom: 10px; left: 0; height: 2px; background: var(--nav-accent); content: ''; transform: scaleX(0); transform-origin: right; transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+.lr-nav nav a:hover { color: var(--nav-accent); }
 .lr-nav nav a:hover::after { transform: scaleX(1); transform-origin: left; }
 /* Language change: only the words differ between the two snapshots, so a short
    cross-fade reads as the text changing, not the page. */
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .2s; animation-timing-function: ease-out; }
-.lr-nav-tools, .lr-language-list { display: flex; align-items: center; }
-.lr-language { position: relative; }
-.lr-language-trigger { display: none; }
+.lr-nav-tools { display: flex; align-items: center; }
 .lr-nav-tools { gap: 12px; justify-self: end; }
 .lr-nav-tools > * { flex: none; }
 .lr-nav-progress { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; border-radius: 999px; background: var(--lr-brand-gradient); opacity: 0; transform: scaleX(var(--lr-progress, 0)); transform-origin: left; transition: opacity .4s ease; }
 .lr-nav[data-scrolled='true'] .lr-nav-progress { opacity: 1; }
-.lr-language-list { gap: 0; min-width: 0; margin: 0; padding: 5px; border: 1px solid #d8d3ca; border-radius: 999px; background: #fff; }
-.lr-language-list > svg { width: 17px; margin: 0 4px 0 6px; color: var(--lr-orange-deep); }
-/* The full name is for the drop-down; the bar shows the code. */
-.lr-language-list em { display: none; font-style: normal; }
-.lr-language-list button { min-width: 38px; min-height: 32px; padding: 0 9px; border: 0; border-radius: 999px; background: transparent; color: #655f57; cursor: pointer; font-size: 10px; font-weight: 900; transition: background-color .25s ease, color .25s ease; }
-.lr-language-list button:hover { background: rgb(255 99 21 / 12%); color: var(--lr-orange-deep); }
-.lr-language-list button[aria-pressed='true'] { background: var(--lr-ink); color: #fff; }
-.lr-donate { display: inline-flex; min-width: 176px; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 0 17px; border-radius: 999px; background: var(--lr-orange); color: #fff; font-size: 12px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; transition: filter .25s ease, transform .25s ease, box-shadow .25s ease; }
-.lr-donate:hover { color: #fff; filter: brightness(.9); box-shadow: 0 12px 28px rgb(80 22 0 / 22%); transform: translateY(-2px); }
+
+/* --- Adaptive bar ----------------------------------------------------------
+   Every section declares data-tone; the script sets the same on the bar from
+   whichever section is under it, and these tokens follow. Light is the
+   default; dark sections get a smoked-glass bar with white type, orange ones
+   an orange bar where the donate button turns white so it still stands out. */
+.lr-nav {
+  --nav-ink: var(--lr-ink); --nav-accent: var(--lr-orange-deep);
+  --nav-bg: rgb(255 250 245 / 92%); --nav-line: rgb(26 26 26 / 12%); --nav-shadow: rgb(74 35 8 / 8%);
+  --nav-ctl-bg: #fff; --nav-ctl-line: #d8d3ca;
+  --pill-off: #655f57; --pill-thumb: var(--lr-ink); --pill-on: #fff;
+  transition-property: color, min-height, background-color, border-color, box-shadow, backdrop-filter;
+}
+.lr-nav[data-tone='dark'] {
+  --nav-ink: #fff; --nav-accent: var(--lr-orange);
+  --nav-bg: rgb(20 19 18 / 74%); --nav-line: rgb(255 255 255 / 10%); --nav-shadow: rgb(0 0 0 / 28%);
+  --nav-ctl-bg: rgb(255 255 255 / 7%); --nav-ctl-line: rgb(255 255 255 / 16%);
+  --pill-off: rgb(255 255 255 / 62%); --pill-thumb: #fff; --pill-on: var(--lr-ink);
+}
+.lr-nav[data-tone='orange'] {
+  --nav-ink: #fff; --nav-accent: #fff;
+  --nav-bg: rgb(246 88 14 / 86%); --nav-line: rgb(255 255 255 / 22%); --nav-shadow: rgb(110 30 0 / 18%);
+  --nav-ctl-bg: rgb(255 255 255 / 14%); --nav-ctl-line: rgb(255 255 255 / 34%);
+  --pill-off: rgb(255 255 255 / 82%); --pill-thumb: #fff; --pill-on: var(--lr-orange-ink);
+}
+.lr-nav[data-tone='orange'] .lr-donate { background: #fff; color: var(--lr-orange-ink); }
+.lr-nav[data-tone='orange'] .lr-donate:hover { color: var(--lr-orange-ink); }
+.lr-nav[data-tone='orange'] .lr-nav-progress { background: #fff; }
+.lr-nav-logo { display: grid; }
+.lr-nav-logo > img { grid-area: 1 / 1; transition: opacity .45s ease; }
+.lr-nav-logo > img:last-child { opacity: 0; }
+.lr-nav:is([data-tone='dark'], [data-tone='orange']) .lr-nav-logo > img:first-child { opacity: 0; }
+.lr-nav:is([data-tone='dark'], [data-tone='orange']) .lr-nav-logo > img:last-child { opacity: 1; }
+
+/* --- Language pill -----------------------------------------------------------
+   --lr-pos is the thumb's place, 0 to 2 (fractional while dragging). It is a
+   registered number, so it animates; the thumb and the clip on the light
+   labels both read it, which keeps them in lockstep. The curve overshoots a
+   touch so the thumb lands with a little bounce. */
+@property --lr-pos { syntax: '<number>'; inherits: true; initial-value: 0; }
+.lr-lang {
+  display: flex; align-items: center; padding: 4px; border: 1px solid var(--nav-ctl-line); border-radius: 999px;
+  background: var(--nav-ctl-bg); transition: --lr-pos .62s cubic-bezier(.3, 1.45, .45, 1), background-color .45s ease, border-color .45s ease;
+}
+.lr-lang.is-dragging { transition: background-color .45s ease, border-color .45s ease; }
+.lr-lang-globe { width: 17px; margin: 0 5px 0 6px; color: var(--nav-accent); transition: color .45s ease; }
+.lr-lang-track { position: relative; display: grid; grid-template-columns: repeat(3, 40px); touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
+.lr-lang.is-dragging .lr-lang-track { cursor: grabbing; }
+.lr-lang-track button, .lr-lang-on span { display: grid; height: 32px; place-items: center; font-size: 10px; font-weight: 900; letter-spacing: .04em; }
+.lr-lang-track button { position: relative; z-index: 1; padding: 0; border: 0; border-radius: 999px; background: transparent; color: var(--pill-off); cursor: inherit; transition: color .45s ease; }
+.lr-lang-track button:hover { color: var(--nav-accent); }
+.lr-lang-track button:focus-visible { outline-offset: 1px; }
+.lr-lang-thumb {
+  position: absolute; top: 0; bottom: 0; left: 0; width: calc(100% / 3); border-radius: 999px;
+  background: var(--pill-thumb); box-shadow: 0 4px 12px rgb(0 0 0 / 16%);
+  translate: calc(var(--lr-pos) * 100%) 0;
+  transition: background-color .45s ease, scale .32s cubic-bezier(.3, 1.6, .5, 1);
+}
+/* Squash and stretch: a held thumb flattens a little, and a jump between
+   languages stretches it along the way, settling as it lands. */
+.lr-lang.is-dragging .lr-lang-thumb { scale: 1.1 .88; }
+.lr-lang.is-moving .lr-lang-thumb { animation: lr-thumb-stretch .5s cubic-bezier(.3, .7, .4, 1); }
+@keyframes lr-thumb-stretch { 0% { scale: 1; } 35% { scale: 1.22 .84; } 100% { scale: 1; } }
+.lr-lang-on {
+  position: absolute; z-index: 2; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr);
+  color: var(--pill-on); pointer-events: none; transition: color .45s ease;
+  clip-path: inset(0 calc((2 - var(--lr-pos)) * 100% / 3) 0 calc(var(--lr-pos) * 100% / 3) round 999px);
+}
+
+.lr-donate { display: inline-flex; min-width: 176px; min-height: 44px; align-items: center; justify-content: center; gap: 8px; padding: 0 17px; border-radius: 999px; background: var(--lr-orange); color: #fff; font-size: 12px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; transition: filter .25s ease, transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease, background-color .45s ease, color .45s ease; }
+.lr-donate:hover { color: #fff; filter: brightness(.9); box-shadow: 0 12px 28px rgb(80 22 0 / 22%); transform: translate(var(--mx, 0px), calc(var(--my, 0px) - 2px)); }
 .lr-donate svg { width: 17px; }
 /* Flat paper with a fine grain. The animated gradient mesh and the two
    orbiting blurred blobs that used to sit here are gone: they read as
@@ -92,10 +152,11 @@
 .lr-hero h1 i { color: var(--lr-gold); font-family: inherit; font-style: normal; font-weight: 800; }
 .lr-hero-copy > span { max-width: 640px; color: #5e5850; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.6; }
 .lr-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
-.lr-hero-actions a { display: inline-flex; min-height: 50px; align-items: center; gap: 9px; padding: 0 18px; border: 1px solid var(--lr-ink); border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; transition: background-color .25s ease, color .25s ease, border-color .25s ease, transform .25s ease, box-shadow .25s ease; }
+.lr-hero-actions a { display: inline-flex; min-height: 50px; align-items: center; gap: 9px; padding: 0 18px; border: 1px solid var(--lr-ink); border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; transition: background-color .25s ease, color .25s ease, border-color .25s ease, transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease; }
 .lr-hero-actions a:first-child { background: var(--lr-ink); color: #fff; }
 .lr-hero-actions a:last-child { border-color: var(--lr-orange); background: var(--lr-orange); color: #fff; }
-.lr-hero-actions a:hover { box-shadow: 0 12px 28px rgb(33 25 18 / 12%); transform: translateY(-3px); }
+[data-magnetic] { transform: translate(var(--mx, 0px), var(--my, 0px)); }
+.lr-hero-actions a:hover { box-shadow: 0 12px 28px rgb(33 25 18 / 12%); transform: translate(var(--mx, 0px), calc(var(--my, 0px) - 3px)); }
 .lr-hero-actions svg { width: 16px; }
 .lr-hero-collage { position: relative; z-index: 2; display: grid; align-self: center; grid-template-columns: 1.52fr 1fr; gap: 10px; min-height: 0; }
 .lr-hero-video { position: relative; grid-column: 1 / -1; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--lr-r-lg); background: #171717; box-shadow: 0 22px 60px rgb(70 38 18 / 16%); }
@@ -289,7 +350,7 @@
 .lr-give h2 { margin: 28px 0; font-size: clamp(58px, 7vw, 108px); letter-spacing: -.07em; line-height: .88; }
 .lr-give p { max-width: 740px; color: #fff; font-size: 17px; font-weight: 700; line-height: 1.6; }
 .lr-give > a { display: inline-flex; min-height: 60px; align-items: center; gap: 12px; padding: 0 24px; border-radius: 999px; background: #fff; color: var(--lr-orange-ink); font-size: 12px; font-weight: 900; text-transform: uppercase; transition: box-shadow .3s ease, transform .3s ease; }
-.lr-give > a:hover { box-shadow: 0 18px 45px rgb(43 8 0 / 28%); transform: translateY(-4px); }
+.lr-give > a:hover { box-shadow: 0 18px 45px rgb(43 8 0 / 28%); transform: translate(var(--mx, 0px), calc(var(--my, 0px) - 4px)); }
 .lr-give > a svg { width: 18px; }
 .lr-footer { display: grid; grid-template-columns: 1fr auto auto; gap: 45px; align-items: end; min-height: 310px; padding: calc(var(--lr-section-y) * .6) var(--lr-gutter) calc(var(--lr-section-y) * .75); background: #181818; color: #fff; }
 .lr-footer-brand { display: flex; max-width: 380px; flex-direction: column; gap: 18px; }
@@ -305,7 +366,7 @@
 .lr-footer > div:last-child a svg { width: 19px; }
 
 .lr-hero-copy > p { animation: lr-hero-in .7s .05s cubic-bezier(.2,.8,.2,1) both; }
-.lr-hero-copy > h1 { animation: lr-hero-in .8s .12s cubic-bezier(.2,.8,.2,1) both; }
+.lr-hero h1 .lr-w { animation: lr-word-in 1s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(140ms + var(--w) * 70ms); }
 .lr-hero-copy > span { animation: lr-hero-in .8s .2s cubic-bezier(.2,.8,.2,1) both; }
 .lr-hero-actions { animation: lr-hero-in .8s .28s cubic-bezier(.2,.8,.2,1) both; }
 .lr-hero-collage { animation: lr-media-in .95s .12s cubic-bezier(.2,.8,.2,1) both; }
@@ -487,7 +548,7 @@
     color .25s ease;
 }
 /* Headings resolve out of a soft blur; media eases down out of a slight scale. */
-.legacy-revival .lr-reveal:is(h1, h2) { translate: 0 38px; filter: blur(8px); }
+.legacy-revival .lr-reveal:is(h1, h2) { opacity: 1; translate: none; filter: none; }
 .legacy-revival .lr-reveal:is(figure, .lr-map) { translate: 0 30px; scale: .975; }
 .legacy-revival .lr-reveal.is-revealed { opacity: 1; translate: none; scale: none; filter: none; }
 @media (prefers-reduced-motion: reduce) {
@@ -504,42 +565,21 @@
   .lr-nav { grid-template-columns: auto 1fr; gap: 12px; }
   /* The bar carries only the logo and two controls now, so the wordmark can
      grow to roughly the height of the buttons beside it. */
-  .lr-nav .legacy-logo { width: clamp(140px, 50vw, 200px); }
+  .lr-nav .legacy-logo { width: clamp(112px, calc(100vw - 236px), 200px); }
   .lr-nav-tools { gap: 9px; }
   .lr-donate { display: none; }
 
-  .lr-language-trigger {
-    display: inline-flex; min-height: 46px; align-items: center; gap: 7px; padding: 0 12px;
-    border: 1px solid #d8d3ca; border-radius: 999px; background: #fff; color: var(--lr-ink);
-    cursor: pointer; font-size: 12px; font-weight: 900; letter-spacing: .04em;
-    transition: border-color .3s ease, color .3s ease;
-  }
-  /* УКР is wider than EN and RU, and the tools are right-aligned, so without a
-     fixed slot for the code the burger slid sideways on every switch. */
-  .lr-language-trigger b { min-width: 27px; text-align: center; }
-  .lr-language-trigger > svg:first-child { width: 18px; color: var(--lr-orange-deep); }
-  .lr-language-trigger > svg:last-child { width: 13px; transition: rotate .3s cubic-bezier(.2, .8, .2, 1); }
-  .lr-language[data-open='true'] .lr-language-trigger { border-color: var(--lr-orange); color: var(--lr-orange-deep); }
-  .lr-language[data-open='true'] .lr-language-trigger > svg:last-child { rotate: 180deg; }
-
-  /* The list drops out of the trigger instead of sitting in the bar. */
-  .lr-language-list {
-    position: absolute; z-index: 30; top: calc(100% + 11px); right: 0;
-    flex-direction: column; gap: 3px; min-width: 176px; padding: 7px;
-    border-radius: var(--lr-r-md); box-shadow: 0 26px 54px rgb(74 35 8 / 22%);
-    opacity: 0; visibility: hidden; transform: translateY(-9px);
-    transition: opacity .28s ease, transform .28s cubic-bezier(.22, 1, .32, 1), visibility .28s;
-  }
-  .lr-language[data-open='true'] .lr-language-list { opacity: 1; visibility: visible; transform: none; }
-  .lr-language-list > svg { display: none; }
-  .lr-language-list button { display: flex; width: 100%; min-height: 46px; align-items: center; justify-content: flex-start; padding: 0 14px; border-radius: var(--lr-r-sm); font-size: 12px; }
-  .lr-language-list span { display: none; }
-  .lr-language-list em { display: inline; }
+  /* The pill stays in the bar at every width. The globe goes, the segments
+     narrow, and the wordmark gives up what it must on the smallest phones. */
+  .lr-lang-globe { display: none; }
+  .lr-lang-track { grid-template-columns: repeat(3, 36px); }
+  .lr-lang-track button, .lr-lang-on span { height: 36px; font-size: 11px; }
+  .lr-nav-toggle { order: 2; }
 
   .lr-nav-toggle {
     display: grid; width: 46px; height: 46px; flex: none; place-items: center; padding: 0;
-    border: 1px solid #d8d3ca; border-radius: 50%; background: #fff; color: var(--lr-ink);
-    cursor: pointer; transition: background-color .3s ease, color .3s ease, border-color .3s ease;
+    border: 1px solid var(--nav-ctl-line); border-radius: 50%; background: var(--nav-ctl-bg); color: var(--nav-ink);
+    cursor: pointer; transition: background-color .45s ease, color .45s ease, border-color .45s ease;
   }
   .lr-nav-toggle:hover { border-color: var(--lr-orange); color: var(--lr-orange); }
 
@@ -692,4 +732,38 @@
 
   .lr-marquee { display: flex; align-items: center; height: var(--lr-marquee-h); padding-block: 0; }
   .lr-marquee-track { flex-shrink: 0; } /* a flex child would otherwise compress below max-content */
+}
+
+/* --- Words --------------------------------------------------------------------
+   .lr-w is one word of a heading, .lr-t a whole run of body copy. Both are
+   inline-blocks so they can move; --w is a word's place in its heading. */
+.lr-w, .lr-t { display: inline-block; }
+.lr-t { --lr-base: 120ms; }
+@keyframes lr-word-in { from { opacity: 0; translate: 0 .42em; filter: blur(8px); } to { opacity: 1; translate: none; filter: none; } }
+
+/* Section headings arrive word by word as they scroll in. */
+.legacy-revival h2.lr-reveal .lr-w {
+  opacity: 0; translate: 0 .5em; filter: blur(7px);
+  transition: opacity .9s cubic-bezier(.16, 1, .3, 1), translate .9s cubic-bezier(.16, 1, .3, 1), filter .9s ease;
+  transition-delay: calc(min(var(--w), 12) * 55ms);
+}
+.legacy-revival h2.lr-reveal.is-revealed .lr-w { opacity: 1; translate: none; filter: none; }
+
+/* Language change, beat one: the words on screen blur and lift away. */
+.legacy-revival[data-leaving] :is(.lr-t, .lr-w) {
+  opacity: 0 !important; translate: 0 -.28em !important; filter: blur(6px) !important;
+  transition: opacity .19s ease-in, translate .19s ease-in, filter .19s ease-in !important;
+  transition-delay: calc(min(var(--w, 0), 5) * 10ms) !important;
+}
+/* Beat two: the new words rise in, headings first, body copy just behind. */
+.legacy-revival[data-swapping] :is(.lr-t, .lr-w) {
+  animation: lr-word-in .72s cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: calc(var(--lr-base, 0ms) + min(var(--w, 0), 12) * 32ms);
+}
+/* A heading still below the fold keeps its own entrance for later. */
+.legacy-revival[data-swapping] h2.lr-reveal:not(.is-revealed) .lr-w { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .legacy-revival .lr-w, .legacy-revival .lr-t { opacity: 1 !important; translate: none !important; filter: none !important; animation: none !important; transition: none !important; }
+  .lr-lang, .lr-lang-thumb { transition: none; animation: none; }
 }

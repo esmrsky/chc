@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   AtSign,
   BookOpen,
-  ChevronDown,
   Globe2,
   HandHeart,
   Heart,
@@ -22,7 +21,7 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { type CSSProperties, type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react';
+import React, { type CSSProperties, type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import './revival.css';
 
@@ -274,25 +273,144 @@ function Logo({ inverse = false, mark = false }: { inverse?: boolean; mark?: boo
   return <img className={mark ? 'legacy-logo legacy-logo--mark' : 'legacy-logo'} src={src} alt="Christian Hope Church" />;
 }
 
+// Copy is wrapped so a language change can animate it. Keyed by language, so
+// on a switch only these small spans are replaced: their entrance animation
+// plays on mount, while the cards, images and videos around them stay put.
+function T({ children }: { children: string }) {
+  return <span className="lr-t">{children}</span>;
+}
+// Headings go word by word. Whitespace stays as plain text between the words,
+// so wrapping, balancing and the pre-line breaks in the service titles behave
+// exactly as they did before. `from` continues the count across two calls.
+function words(text: string, lang: string, from = 0) {
+  let index = from;
+  return text.split(/(\s+)/).map((part, i) => (
+    /^\s+$/.test(part) || part === ''
+      ? part
+      : <span className="lr-w" key={`${lang}-${i}`} style={{ '--w': index++ } as CSSProperties}>{part}</span>
+  ));
+}
+const wordCount = (text: string) => text.split(/\s+/).filter(Boolean).length;
+
+type Tone = 'light' | 'dark' | 'orange';
+
 function Revival({ language, onLanguageChange }: { language: RevivalLanguage; onLanguageChange: (language: RevivalLanguage) => void }) {
   const c = revivalCopy[language];
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [langOpen, setLangOpen] = useState(false);
-  const language_ = useRef<HTMLDivElement>(null);
-  const overlayOpen = menuOpen || langOpen;
+  const overlayOpen = menuOpen;
+  const root = useRef<HTMLElement>(null);
+  const pill = useRef<HTMLDivElement>(null);
+  const pillTrack = useRef<HTMLDivElement>(null);
+  const languageIndex = revivalLanguages.findIndex((item) => item.code === language);
+  const languageIndexRef = useRef(languageIndex);
+  languageIndexRef.current = languageIndex;
 
-  // The words change in place; nothing else on the page is touched, so the
-  // videos keep playing and the scroll position holds. Where the browser has
-  // view transitions the old and new words cross-fade for a fifth of a second;
-  // elsewhere they simply swap. (This used to fade the whole page out and back
-  // in, which read as a reload.)
+  // A language change in two beats. The words on screen blur and lift away
+  // (data-leaving), then the copy is replaced and the new words rise in, one
+  // after another (data-swapping; see revival.css). Only the text spans are
+  // rebuilt, so videos keep playing and the scroll position holds.
+  const swapTimers = useRef<number[]>([]);
   const swapLanguage = (next: RevivalLanguage) => {
-    if (next === language) return;
-    const apply = () => flushSync(() => onLanguageChange(next));
+    if (next === language && !root.current?.hasAttribute('data-leaving')) return;
+    swapTimers.current.forEach(window.clearTimeout);
+    swapTimers.current = [];
+    const main = root.current;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!document.startViewTransition || reduce || document.hidden) { apply(); return; }
-    document.startViewTransition(apply);
+    if (!main || reduce || document.hidden) {
+      main?.removeAttribute('data-leaving');
+      flushSync(() => onLanguageChange(next));
+      return;
+    }
+    main.setAttribute('data-leaving', '');
+    swapTimers.current.push(window.setTimeout(() => {
+      // Same task as the render, so the new spans are never styled as leaving.
+      main.removeAttribute('data-leaving');
+      main.setAttribute('data-swapping', '');
+      flushSync(() => onLanguageChange(next));
+    }, 200));
+  };
+  useEffect(() => () => swapTimers.current.forEach(window.clearTimeout), []);
+
+  // The pill moves the moment it is chosen, ahead of the words.
+  const choose = (index: number) => {
+    const el = pill.current;
+    if (el) {
+      el.style.setProperty('--lr-pos', String(index));
+      el.classList.remove('is-moving');
+      void el.offsetWidth;
+      el.classList.add('is-moving');
+      swapTimers.current.push(window.setTimeout(() => el.classList.remove('is-moving'), 420));
+    }
+    swapLanguage(revivalLanguages[index].code);
+  };
+  const chooseRef = useRef(choose);
+  chooseRef.current = choose;
+
+  // Drag the pill. The thumb follows the finger 1:1 with a little give past
+  // either end, and on release settles on the nearest language. A press that
+  // never moves is left to the buttons' own click.
+  useEffect(() => {
+    const track = pillTrack.current;
+    const group = pill.current;
+    if (!track || !group) return;
+    let drag: { id: number; x: number; from: number; moved: boolean; raw: number } | null = null;
+    let swallow = false;
+    const onDown = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      drag = { id: event.pointerId, x: event.clientX, from: languageIndexRef.current, moved: false, raw: languageIndexRef.current };
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!drag || event.pointerId !== drag.id) return;
+      const dx = event.clientX - drag.x;
+      if (!drag.moved) {
+        if (Math.abs(dx) < 4) return;
+        drag.moved = true;
+        track.setPointerCapture(event.pointerId);
+        group.classList.add('is-dragging');
+      }
+      const raw = drag.from + dx / (track.clientWidth / 3);
+      drag.raw = raw;
+      const give = raw < 0 ? raw * 0.22 : raw > 2 ? 2 + (raw - 2) * 0.22 : raw;
+      group.style.setProperty('--lr-pos', String(give));
+    };
+    const onUp = (event: PointerEvent) => {
+      if (!drag || event.pointerId !== drag.id) return;
+      const { moved, raw } = drag;
+      drag = null;
+      if (!moved) return;
+      if (track.hasPointerCapture(event.pointerId)) track.releasePointerCapture(event.pointerId);
+      group.classList.remove('is-dragging');
+      swallow = true;
+      window.setTimeout(() => { swallow = false; }, 0);
+      chooseRef.current(Math.max(0, Math.min(2, Math.round(raw))));
+    };
+    const onClick = (event: MouseEvent) => {
+      if (swallow) { event.preventDefault(); event.stopPropagation(); swallow = false; }
+    };
+    track.addEventListener('pointerdown', onDown);
+    track.addEventListener('pointermove', onMove);
+    track.addEventListener('pointerup', onUp);
+    track.addEventListener('pointercancel', onUp);
+    track.addEventListener('click', onClick, true);
+    return () => {
+      track.removeEventListener('pointerdown', onDown);
+      track.removeEventListener('pointermove', onMove);
+      track.removeEventListener('pointerup', onUp);
+      track.removeEventListener('pointercancel', onUp);
+      track.removeEventListener('click', onClick, true);
+    };
+  }, []);
+
+  // Arrow keys move between languages, as in any radio group.
+  const onPillKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
+    if (!step) return;
+    event.preventDefault();
+    const next = (languageIndexRef.current + step + 3) % 3;
+    choose(next);
+    pillTrack.current?.querySelectorAll<HTMLButtonElement>('button')[next]?.focus();
   };
 
   // Keep the document itself in the chosen language: <html lang> for screen
@@ -354,6 +472,19 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       // reads 0 and says nothing about where the page actually sits.
       if (overlayOpen) return;
       setScrolled(window.scrollY > 48);
+      // The bar takes the colour of whatever section is passing under it.
+      // Written straight to the element: a state change here would re-render
+      // the whole page each time a section boundary passes.
+      const bar = nav.current;
+      if (bar) {
+        const probe = bar.offsetHeight / 2;
+        let tone: Tone = 'light';
+        for (const section of root.current?.querySelectorAll<HTMLElement>(':is(section, footer)[data-tone]') ?? []) {
+          const rect = section.getBoundingClientRect();
+          if (rect.top <= probe && rect.bottom > probe) { tone = section.dataset.tone as Tone; break; }
+        }
+        if (bar.dataset.tone !== tone) bar.dataset.tone = tone;
+      }
       const max = document.documentElement.scrollHeight - window.innerHeight;
       nav.current?.style.setProperty('--lr-progress', max > 0 ? String(Math.min(1, window.scrollY / max)) : '0');
     };
@@ -364,16 +495,15 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
       window.removeEventListener('scroll', updateHeader);
       window.removeEventListener('resize', updateHeader);
     };
-  }, [overlayOpen]);
+  }, [overlayOpen, language]);
 
-  // Hold the page still behind anything that opens over it — the drawer and
-  // the language menu both. `overflow: hidden` on the body is enough on
+  // Hold the page still behind the drawer. `overflow: hidden` on the body is enough on
   // Android and desktop but iOS Safari scrolls straight through it, so the
   // body comes out of flow at its current offset and is put back on close.
-  // Keyed on the pair, so passing straight from one to the other never
-  // unlocks in between.
   useEffect(() => {
     if (!overlayOpen) return;
+    // The drawer is paper-coloured, so the bar above it goes light too.
+    if (nav.current) nav.current.dataset.tone = 'light';
     const { body } = document;
     const offset = window.scrollY;
     // Taking the body out of flow takes the scrollbar with it. Pad by its
@@ -403,19 +533,27 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     return () => window.removeEventListener('keydown', onKey);
   }, [menuOpen]);
 
+  // The main buttons lean a few pixels toward the pointer and spring back.
+  // Mouse and trackpad only; a touch has no hover to lean toward.
   useEffect(() => {
-    if (!langOpen) return;
-    const onDown = (event: PointerEvent) => {
-      if (!language_.current?.contains(event.target as Node)) setLangOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setLangOpen(false); };
-    window.addEventListener('pointerdown', onDown);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('pointerdown', onDown);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [langOpen]);
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const els = Array.from(root.current?.querySelectorAll<HTMLElement>('[data-magnetic]') ?? []);
+    const offs = els.map((el) => {
+      const onMove = (event: PointerEvent) => {
+        const rect = el.getBoundingClientRect();
+        const dx = (event.clientX - (rect.left + rect.width / 2)) * 0.22;
+        const dy = (event.clientY - (rect.top + rect.height / 2)) * 0.3;
+        el.style.setProperty('--mx', `${Math.max(-9, Math.min(9, dx)).toFixed(1)}px`);
+        el.style.setProperty('--my', `${Math.max(-6, Math.min(6, dy)).toFixed(1)}px`);
+      };
+      const onLeave = () => { el.style.removeProperty('--mx'); el.style.removeProperty('--my'); };
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerleave', onLeave);
+      return () => { el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerleave', onLeave); };
+    });
+    return () => offs.forEach((off) => off());
+  }, []);
 
   // Section reveals. An IntersectionObserver rather than animation-timeline:
   // a scroll-linked range never completes for elements at the document bottom,
@@ -732,32 +870,36 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
     rail.scrollBy({ left: direction * step, behavior: 'smooth' });
   };
 
+  const t = (text: string) => <T key={language}>{text}</T>;
+  const w = (text: string, from = 0) => words(text, language, from);
+  // Two-part headings: the second part is the coloured one, and its words
+  // carry on the count so the stagger runs straight through.
+  const w2 = (parts: readonly [string, string] | readonly string[]) => (
+    <>{w(parts[0])}{' '}<i>{w(parts[1], wordCount(parts[0]))}</i></>
+  );
+
   return (
-    <main className="legacy-revival" lang={language}>
-      <header className="lr-nav" data-scrolled={scrolled} ref={nav}>
-        <a href="#lr-main"><Logo /></a>
-        <nav id="lr-nav-menu" data-open={menuOpen} className="lr-nav-links">{c.nav.map((label, index) => <a key={index} style={{ '--i': index } as CSSProperties} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{label}</a>)}<a className="lr-menu-donate" style={{ '--i': c.nav.length } as CSSProperties} href={GIVE} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}><Heart aria-hidden="true" /> {c.donate}</a></nav>
+    <main className="legacy-revival" lang={language} ref={root}>
+      <header className="lr-nav" data-scrolled={scrolled} data-tone="light" ref={nav}>
+        {/* Both logos sit in one cell and cross-fade as the bar changes tone. */}
+        <a href="#lr-main" className="lr-nav-logo" aria-label="Christian Hope Church"><Logo /><Logo inverse /></a>
+        <nav id="lr-nav-menu" data-open={menuOpen} className="lr-nav-links">{c.nav.map((label, index) => <a key={index} style={{ '--i': index } as CSSProperties} href={['#lr-story', '#lr-leadership', '#lr-missions', '#lr-watch', '#lr-visit'][index]} onClick={() => setMenuOpen(false)}>{t(label)}</a>)}<a className="lr-menu-donate" style={{ '--i': c.nav.length } as CSSProperties} href={GIVE} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}><Heart aria-hidden="true" /> {t(c.donate)}</a></nav>
         <div className="lr-nav-tools">
-          <button type="button" className="lr-nav-toggle" data-open={menuOpen} aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => { setMenuOpen((open) => !open); setLangOpen(false); }}><span className="lr-burger" aria-hidden="true"><i /><i /><i /></span></button>
-          {/* One list, two presentations: an inline segmented control with room
-              for it, a drop-down behind a globe on the phone bar, where the
-              three codes side by side crowded out the logo. */}
-          <div className="lr-language" data-open={langOpen} ref={language_}>
-            <button type="button" className="lr-language-trigger" aria-expanded={langOpen} aria-controls="lr-language-list" aria-label={c.language} onClick={() => { setLangOpen((open) => !open); setMenuOpen(false); }}>
-              <Globe2 aria-hidden="true" />
-              <b>{revivalLanguages.find((item) => item.code === language)?.label}</b>
-              <ChevronDown aria-hidden="true" />
-            </button>
-            <fieldset id="lr-language-list" className="lr-language-list" aria-label={c.language}>
-              <Globe2 aria-hidden="true" />
-              {revivalLanguages.map((item) => (
-                <button key={item.code} type="button" aria-label={item.name} aria-pressed={language === item.code} onClick={() => { setLangOpen(false); swapLanguage(item.code); }}>
-                  <span>{item.label}</span><em>{item.name}</em>
-                </button>
+          <button type="button" className="lr-nav-toggle" data-open={menuOpen} aria-expanded={menuOpen} aria-controls="lr-nav-menu" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen((open) => !open)}><span className="lr-burger" aria-hidden="true"><i /><i /><i /></span></button>
+          {/* A sliding pill. Click, arrow keys, or drag the thumb across. The
+              light labels are a second copy of the row clipped to the thumb,
+              so each letter changes colour exactly as the thumb passes it. */}
+          <div className="lr-lang" ref={pill} role="radiogroup" aria-label={c.language} onKeyDown={onPillKey} style={{ '--lr-pos': languageIndex } as CSSProperties}>
+            <Globe2 className="lr-lang-globe" aria-hidden="true" />
+            <div className="lr-lang-track" ref={pillTrack}>
+              <span className="lr-lang-thumb" aria-hidden="true" />
+              {revivalLanguages.map((item, index) => (
+                <button key={item.code} type="button" role="radio" aria-checked={language === item.code} tabIndex={language === item.code ? 0 : -1} aria-label={item.name} lang={item.code} onClick={() => choose(index)}>{item.label}</button>
               ))}
-            </fieldset>
+              <div className="lr-lang-on" aria-hidden="true">{revivalLanguages.map((item) => <span key={item.code}>{item.label}</span>)}</div>
+            </div>
           </div>
-          <a className="lr-donate" href={GIVE} target="_blank" rel="noreferrer"><Heart aria-hidden="true" /> {c.donate}</a>
+          <a className="lr-donate" data-magnetic href={GIVE} target="_blank" rel="noreferrer"><Heart aria-hidden="true" /> {t(c.donate)}</a>
         </div>
         <span className="lr-nav-progress" aria-hidden="true" />
       </header>
@@ -765,14 +907,14 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
 
       <div className="lr-language-content">
 
-      <section className="lr-hero" id="lr-main">
+      <section className="lr-hero" id="lr-main" data-tone="light">
         <div className="lr-hero-copy">
-          <p>{c.eyebrow}</p>
-          <h1>{c.heroTitle[0]}{' '}<i>{c.heroTitle[1]}</i></h1>
-          <span>{c.heroBody}</span>
+          <p>{t(c.eyebrow)}</p>
+          <h1>{w2(c.heroTitle)}</h1>
+          <span>{t(c.heroBody)}</span>
           <div className="lr-hero-actions">
-            <a href="#lr-visit">{c.visitCta} <ArrowRight /></a>
-            <a href="#lr-watch"><Play fill="currentColor" /> {c.watchCta}</a>
+            <a href="#lr-visit" data-magnetic>{t(c.visitCta)} <ArrowRight /></a>
+            <a href="#lr-watch" data-magnetic><Play fill="currentColor" /> {t(c.watchCta)}</a>
           </div>
         </div>
         <div className="lr-hero-collage">
@@ -791,7 +933,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         </div>
       </section>
 
-      <section className="lr-marquee" aria-label="Christian Hope Church message">
+      <section className="lr-marquee" data-tone="orange" aria-label="Christian Hope Church message">
         <div className="lr-marquee-track">
           {[0, 1, 2].map((copyIndex) => (
             <div className="lr-marquee-group" aria-hidden={copyIndex > 0} key={copyIndex}>
@@ -801,39 +943,39 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         </div>
       </section>
 
-      <section className="lr-story" id="lr-story">
-        <span>{c.welcomeLabel}</span>
-        <h2>{c.welcomeTitle[0]}{' '}<i>{c.welcomeTitle[1]}</i></h2>
-        <div><strong>{c.welcomeLead}</strong><p>{c.welcomeBody}</p></div>
+      <section className="lr-story" id="lr-story" data-tone="dark">
+        <span>{t(c.welcomeLabel)}</span>
+        <h2>{w2(c.welcomeTitle)}</h2>
+        <div><strong>{t(c.welcomeLead)}</strong><p>{t(c.welcomeBody)}</p></div>
       </section>
 
-      <section className="lr-leadership" id="lr-leadership">
-        <figure><img className="lr-parallax-media" src="media/church-family-cinematic.webp" alt={c.leadershipImageAlt} loading="lazy" /><figcaption>{c.leadershipNote}</figcaption></figure>
-        <div className="lr-leadership-copy"><span>{c.leadershipLabel}</span><h2>{c.leadershipTitle[0]}{' '}<i>{c.leadershipTitle[1]}</i></h2><strong>{c.leadershipLead}</strong><p>{c.leadershipBody}</p></div>
-        <div className="lr-leadership-values">{c.leadershipValues.map((item, index) => <article key={index}><span>0{index + 1}</span><div><h3>{item[0]}</h3><p>{item[1]}</p></div></article>)}</div>
+      <section className="lr-leadership" id="lr-leadership" data-tone="light">
+        <figure><img className="lr-parallax-media" src="media/church-family-cinematic.webp" alt={c.leadershipImageAlt} loading="lazy" /><figcaption>{t(c.leadershipNote)}</figcaption></figure>
+        <div className="lr-leadership-copy"><span>{t(c.leadershipLabel)}</span><h2>{w2(c.leadershipTitle)}</h2><strong>{t(c.leadershipLead)}</strong><p>{t(c.leadershipBody)}</p></div>
+        <div className="lr-leadership-values">{c.leadershipValues.map((item, index) => <article key={index}><span>0{index + 1}</span><div><h3>{w(item[0])}</h3><p>{t(item[1])}</p></div></article>)}</div>
       </section>
 
-      <section className="lr-weekly" id="lr-weekly">
-        <header><span>{c.weeklyLabel}</span><h2>{c.weeklyTitle}</h2><p>{c.weeklyIntro}</p></header>
+      <section className="lr-weekly" id="lr-weekly" data-tone="orange">
+        <header><span>{t(c.weeklyLabel)}</span><h2>{w(c.weeklyTitle)}</h2><p>{t(c.weeklyIntro)}</p></header>
         <div className="lr-service-grid">
-          {c.services.map((service, index) => <article key={index}><span>0{index + 1}</span>{[Music2, HandHeart, Users, BookOpen].map((Icon, iconIndex) => iconIndex === index ? <Icon key={iconIndex} aria-hidden="true" /> : null)}<h3>{service[0]}</h3><p>{service[1]}</p><small>{service[2]}</small></article>)}
+          {c.services.map((service, index) => <article key={index}><span>0{index + 1}</span>{[Music2, HandHeart, Users, BookOpen].map((Icon, iconIndex) => iconIndex === index ? <Icon key={iconIndex} aria-hidden="true" /> : null)}<h3>{w(service[0])}</h3><p>{t(service[1])}</p><small>{t(service[2])}</small></article>)}
         </div>
-        <a className="lr-inline-link" href={INSTAGRAM} target="_blank" rel="noreferrer"><AtSign /> {c.currentUpdates} <ArrowUpRight /></a>
+        <a className="lr-inline-link" href={INSTAGRAM} target="_blank" rel="noreferrer"><AtSign /> {t(c.currentUpdates)} <ArrowUpRight /></a>
       </section>
 
-      <section className="lr-missions" id="lr-missions">
-        <div className="lr-mission-copy"><span>{c.missionLabel}</span><h2>{c.missionTitle[0]}{' '}<i>{c.missionTitle[1]}</i></h2><p>{c.missionBody}</p><a href="https://www.youtube.com/watch?v=dExjSLaZfDM" target="_blank" rel="noreferrer"><Play fill="currentColor" /> {c.missionStory}</a></div>
+      <section className="lr-missions" id="lr-missions" data-tone="dark">
+        <div className="lr-mission-copy"><span>{t(c.missionLabel)}</span><h2>{w2(c.missionTitle)}</h2><p>{t(c.missionBody)}</p><a href="https://www.youtube.com/watch?v=dExjSLaZfDM" target="_blank" rel="noreferrer"><Play fill="currentColor" /> {t(c.missionStory)}</a></div>
         <div className="lr-mission-visuals"><figure className="lr-mission-main"><img className="lr-parallax-media" src="media/social-one-spirit-2026.webp" alt={c.missionItems[1][0]} /></figure><figure><img className="lr-parallax-media" src="media/social-studio-2026.webp" alt={c.missionItems[0][0]} /></figure><figure><img className="lr-parallax-media" src="media/social-prayer-2026-upscaled.webp" alt={c.missionItems[2][0]} /></figure></div>
         <div className="lr-mission-list">{c.missionItems.map((item, index) => {
           // Witness at home, Ukraine, sent to Miami — in that order.
           const Icon = [Megaphone, HeartHandshake, Send][index];
-          return <article key={index}><header><span><Icon aria-hidden="true" /></span><b>0{index + 1}</b></header><h3>{item[0]}</h3><p>{item[1]}</p></article>;
+          return <article key={index}><header><span><Icon aria-hidden="true" /></span><b>0{index + 1}</b></header><h3>{w(item[0])}</h3><p>{t(item[1])}</p></article>;
         })}</div>
       </section>
 
-      <section className="lr-watch" id="lr-watch" ref={videoSection}>
+      <section className="lr-watch" id="lr-watch" ref={videoSection} data-tone="light">
         <div className="lr-watch-panel">
-          <header><span>{c.watchLabel}</span><h2>{c.watchTitle}</h2><p>{c.watchIntro}</p></header>
+          <header><span>{t(c.watchLabel)}</span><h2>{w(c.watchTitle)}</h2><p>{t(c.watchIntro)}</p></header>
           <div className="lr-watch-feature">
             <div className="lr-video-frame lr-player" ref={watchPlayer}>
               <iframe
@@ -847,9 +989,9 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
               {playerChrome('watch')}
             </div>
             <div>
-              <span>{c.nowPlaying}</span>
+              <span>{t(c.nowPlaying)}</span>
               <h3>{featured.title}</h3>
-              <a href={`https://www.youtube.com/watch?v=${featured.id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a>
+              <a href={`https://www.youtube.com/watch?v=${featured.id}`} target="_blank" rel="noreferrer">{t(c.openYoutube)} <ArrowUpRight /></a>
             </div>
           </div>
           <div className="lr-watch-track" ref={videoRail}>
@@ -873,7 +1015,7 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
                 <div>
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <h3>{video.title}</h3>
-                  <a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer">{c.openYoutube} <ArrowUpRight /></a>
+                  <a href={`https://www.youtube.com/watch?v=${video.id}`} target="_blank" rel="noreferrer">{t(c.openYoutube)} <ArrowUpRight /></a>
                 </div>
               </article>
             ))}
@@ -886,25 +1028,25 @@ function Revival({ language, onLanguageChange }: { language: RevivalLanguage; on
         </div>
       </section>
 
-      <section className="lr-gallery">
-        <header><span>{c.galleryLabel}</span><h2>{c.galleryTitle}</h2></header>
-        <div>{gallery.map((src, index) => <figure key={src}><img className="lr-parallax-media" src={src} alt={c.galleryCaptions[index]} loading="lazy" /><figcaption><span>0{index + 1}</span>{c.galleryCaptions[index]}</figcaption></figure>)}</div>
+      <section className="lr-gallery" data-tone="dark">
+        <header><span>{t(c.galleryLabel)}</span><h2>{w(c.galleryTitle)}</h2></header>
+        <div>{gallery.map((src, index) => <figure key={src}><img className="lr-parallax-media" src={src} alt={c.galleryCaptions[index]} loading="lazy" /><figcaption><span>0{index + 1}</span>{t(c.galleryCaptions[index])}</figcaption></figure>)}</div>
       </section>
 
-      <section className="lr-visit" id="lr-visit">
-        <div className="lr-visit-copy"><span>{c.visitLabel}</span><h2>{c.visitTitle}</h2><p>{c.visitBody}</p><address><MapPin /><strong>2800 Pan American Blvd<br />North Port, FL 34287</strong><a href={MAP} target="_blank" rel="noreferrer">{c.directions} <ArrowUpRight /></a><a href={INSTAGRAM} target="_blank" rel="noreferrer">{c.instagramUpdates} <AtSign /></a></address></div>
+      <section className="lr-visit" id="lr-visit" data-tone="light">
+        <div className="lr-visit-copy"><span>{t(c.visitLabel)}</span><h2>{w(c.visitTitle)}</h2><p>{t(c.visitBody)}</p><address><MapPin /><strong>2800 Pan American Blvd<br />North Port, FL 34287</strong><a href={MAP} target="_blank" rel="noreferrer">{t(c.directions)} <ArrowUpRight /></a><a href={INSTAGRAM} target="_blank" rel="noreferrer">{t(c.instagramUpdates)} <AtSign /></a></address></div>
         <div className="lr-map">
           <iframe title="Christian Hope Church map" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=-82.249%2C27.055%2C-82.225%2C27.072&amp;layer=mapnik" />
           <a className="lr-map-marker" href={MAP} target="_blank" rel="noreferrer" aria-label={c.directions}><span><img src="chc-icon-white.svg" alt="" /></span><b>Christian Hope Church</b></a>
         </div>
       </section>
 
-      <section className="lr-give">
-        <div><span>{c.giveLabel}</span><h2>{c.giveTitle}</h2><p>{c.giveBody}</p></div>
-        <a href={GIVE} target="_blank" rel="noreferrer"><Heart fill="currentColor" /> {c.giveNow} <ArrowUpRight /></a>
+      <section className="lr-give" data-tone="orange">
+        <div><span>{t(c.giveLabel)}</span><h2>{w(c.giveTitle)}</h2><p>{t(c.giveBody)}</p></div>
+        <a href={GIVE} target="_blank" rel="noreferrer" data-magnetic><Heart fill="currentColor" /> {t(c.giveNow)} <ArrowUpRight /></a>
       </section>
 
-      <footer className="lr-footer" id="lr-footer"><div className="lr-footer-brand"><Logo inverse /><p>{c.footerDescription}</p></div><p>{c.footerLine}</p><div><a href={INSTAGRAM} target="_blank" rel="noreferrer"><AtSign /> Instagram</a><a href={YOUTUBE} target="_blank" rel="noreferrer"><Video /> YouTube</a></div></footer>
+      <footer className="lr-footer" id="lr-footer" data-tone="dark"><div className="lr-footer-brand"><Logo inverse /><p>{t(c.footerDescription)}</p></div><p>{c.footerLine}</p><div><a href={INSTAGRAM} target="_blank" rel="noreferrer"><AtSign /> Instagram</a><a href={YOUTUBE} target="_blank" rel="noreferrer"><Video /> YouTube</a></div></footer>
       </div>
     </main>
   );
